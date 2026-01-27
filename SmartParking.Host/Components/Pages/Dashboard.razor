@@ -1,0 +1,188 @@
+@page "/"
+@rendermode InteractiveServer
+
+<PageTitle>Dashboard - Smart Parking</PageTitle>
+
+          <div class="grid-2">
+            <div class="panel glass">
+              <div class="panel__head">
+                <h2 class="panel__title">Key Metrics</h2>
+                <div class="panel__actions">
+                  <button class="btn btn--ghost" id="btnSeedData">Seed Demo Data</button>
+                  <button class="btn btn--primary" id="btnAddSlot">Add Slot</button>
+                </div>
+              </div>
+
+              <div class="kpis">
+                <div class="kpi">
+                  <div class="kpi__label">Total Slots</div>
+                  <div class="kpi__value" id="kpiTotal">2</div>
+                  <div class="kpi__hint">Configured parking spots</div>
+                </div>
+
+                <div class="kpi">
+                  <div class="kpi__label">Occupied</div>
+                  <div class="kpi__value kpi__value--danger" id="kpiOcc">1</div>
+                  <div class="kpi__hint">Live occupancy</div>
+                </div>
+
+                <div class="kpi">
+                  <div class="kpi__label">Free</div>
+                  <div class="kpi__value kpi__value--success" id="kpiFree">1</div>
+                  <div class="kpi__hint">Available now</div>
+                </div>
+
+                <div class="kpi">
+                  <div class="kpi__label">Devices Online</div>
+                  <div class="kpi__value" id="kpiOnline">1</div>
+                  <div class="kpi__hint">IoT heartbeat OK</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel glass">
+              <div class="panel__head">
+                <h2 class="panel__title">Occupancy (Last 24h)</h2>
+                <div class="pill pill--info"><span class="dot dot--pulse"></span> Live</div>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="chartLine" height="396" width="990" style="display: block; box-sizing: border-box; height: 198px; width: 495px;"></canvas>
+              </div>
+              <div class="panel__foot">
+                <div class="mini">
+                  <div class="mini__k">Peak hour</div>
+                  <div class="mini__v" id="peakHour">07:00 (60%)</div>
+                </div>
+                <div class="mini">
+                  <div class="mini__k">Avg occupancy</div>
+                  <div class="mini__v" id="avgOcc">50%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="panel glass">
+              <div class="panel__head">
+                <h2 class="panel__title">Live Distribution</h2>
+                <div class="panel__sub">Free vs Occupied vs Offline</div>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="chartDonut" height="682" width="682" style="display: block; box-sizing: border-box; height: 341px; width: 341px;"></canvas>
+              </div>
+              <div class="legend">
+                <div class="legend__item"><span class="swatch swatch--free"></span> Free</div>
+                <div class="legend__item"><span class="swatch swatch--occ"></span> Occupied</div>
+                <div class="legend__item"><span class="swatch swatch--off"></span> Offline</div>
+              </div>
+            </div>
+
+            <div class="panel glass">
+              <div class="panel__head">
+                <h2 class="panel__title">Latest Events</h2>
+                <button class="btn btn--ghost" data-route-jump="logs">View all</button>
+              </div>
+              <div class="feed" id="eventFeed"><div class="event">
+      <div class="event__left">
+        <div class="event__title">Slot A2 mapped to NODE-001/S2</div>
+        <div class="event__meta">Config • Jan 27, 20:38</div>
+      </div>
+      <div class="badge badge--occ">OCCUPIED</div>
+    </div><div class="event">
+      <div class="event__left">
+        <div class="event__title">Slot A1 mapped to NODE-001/S1</div>
+        <div class="event__meta">Config • Jan 27, 20:38</div>
+      </div>
+      <div class="badge badge--free">FREE</div>
+    </div><div class="event">
+      <div class="event__left">
+        <div class="event__title">Pilot initialized: NODE-001 with 2 sensors</div>
+        <div class="event__meta">System • Jan 27, 20:38</div>
+      </div>
+      <div class="badge badge--free">FREE</div>
+    </div></div>
+            </div>
+
+            <div class="panel glass">
+              <div class="panel__head">
+                <h2 class="panel__title">System Health</h2>
+                <div class="pill pill--ok"><span class="dot dot--online"></span> OK</div>
+              </div>
+
+              <div class="health">
+                <div class="health__row">
+                  <div class="health__k">API latency</div>
+                  <div class="health__v"><span id="apiLatency">50</span> ms</div>
+                </div>
+                <div class="health__row">
+                  <div class="health__k">SignalR</div>
+                  <div class="health__v"><span class="pill pill--info">Ready</span></div>
+                </div>
+                <div class="health__row">
+                  <div class="health__k">Database</div>
+                  <div class="health__v"><span class="pill pill--info">Local</span></div>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="actions">
+                <button class="btn btn--primary" id="btnSimLive">Simulate Live Updates</button>
+                <button class="btn btn--ghost" id="btnClearSim">Stop</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel glass">
+            <div class="panel__head">
+              <h2 class="panel__title">Slots Overview</h2>
+              <div class="panel__actions">
+                <div class="seg">
+                  <button class="seg__btn is-active" data-filter="all">All</button>
+                  <button class="seg__btn" data-filter="free">Free</button>
+                  <button class="seg__btn" data-filter="occupied">Occupied</button>
+                  <button class="seg__btn" data-filter="offline">Offline</button>
+                </div>
+                <button class="btn btn--ghost" data-route-jump="live">Open Live Map</button>
+              </div>
+            </div>
+
+            <div class="table">
+              <div class="table__head">
+                <div class="table__row table__row--head">
+                  <div class="cell cell--w120">Slot</div>
+                  <div class="cell">Zone</div>
+                  <div class="cell cell--w160">Status</div>
+                  <div class="cell cell--w160">Distance</div>
+                  <div class="cell cell--w200">Last Update</div>
+                  <div class="cell cell--w160">Device</div>
+                  <div class="cell cell--w140">Actions</div>
+                </div>
+              </div>
+              <div class="table__body" id="slotsTable"><div class="table__row">
+      <div class="cell" data-label="Slot">A1</div>
+      <div class="cell cell--muted" data-label="Zone">Zone A</div>
+      <div class="cell" data-label="Status"><span class="badge badge--free">FREE</span></div>
+      <div class="cell cell--muted" data-label="Distance">32 cm</div>
+      <div class="cell cell--muted" data-label="Last Update">Jan 27, 20:38</div>
+      <div class="cell cell--muted" data-label="Device">NODE-001/S1</div>
+      <div class="cell cell--actions" data-label="Actions">
+        <button class="btn btn--ghost" data-action="view" data-id="1cef1c73-938d-45d7-8b58-c7086b116b22">View</button>
+        <button class="btn btn--ghost" data-action="tele" data-id="1cef1c73-938d-45d7-8b58-c7086b116b22">Telemetry</button>
+      </div>
+    </div><div class="table__row">
+      <div class="cell" data-label="Slot">A2</div>
+      <div class="cell cell--muted" data-label="Zone">Zone A</div>
+      <div class="cell" data-label="Status"><span class="badge badge--occ">OCCUPIED</span></div>
+      <div class="cell cell--muted" data-label="Distance">12 cm</div>
+      <div class="cell cell--muted" data-label="Last Update">Jan 27, 20:38</div>
+      <div class="cell cell--muted" data-label="Device">NODE-001/S2</div>
+      <div class="cell cell--actions" data-label="Actions">
+        <button class="btn btn--ghost" data-action="view" data-id="31a852d4-f96e-4d2a-942d-cbc54b666bb9">View</button>
+        <button class="btn btn--ghost" data-action="tele" data-id="31a852d4-f96e-4d2a-942d-cbc54b666bb9">Telemetry</button>
+      </div>
+    </div></div>
+            </div>
+          </div>
+
+@code {}

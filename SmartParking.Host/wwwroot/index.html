@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Parking — Admin</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css?v=1.5" />
+
+  <!-- Charts (professional + lightweight) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+  <!-- Ambient background -->
+  <div class="bg">
+    <div class="bg__orb bg__orb--1"></div>
+    <div class="bg__orb bg__orb--2"></div>
+    <div class="bg__grid"></div>
+  </div>
+
+  <!-- Toasts -->
+  <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Modal -->
+  <div id="modalBackdrop" class="modal-backdrop" hidden>
+    <div class="modal glass" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal__head">
+        <h3 id="modalTitle" class="modal__title">Modal</h3>
+        <button class="icon-btn" data-modal-close aria-label="Close">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div id="modalBody" class="modal__body"></div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" data-modal-close>Cancel</button>
+        <button id="modalPrimary" class="btn btn--primary">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app" id="app">
+
+    <!-- Sidebar -->
+    <aside class="sidebar glass" id="sidebar">
+      <div class="sidebar__brand">
+        <div class="brand">
+          <div class="brand__mark" aria-hidden="true"></div>
+          <div class="brand__text">
+            <div class="brand__name">SmartParking</div>
+            <div class="brand__sub">Admin Console</div>
+          </div>
+        </div>
+
+        <button class="icon-btn sidebar__collapse" id="btnCollapse" aria-label="Collapse sidebar">
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path d="M14 7l-5 5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="sidebar__section">
+        <div class="sidebar__label">Navigation</div>
+        <nav class="nav" id="nav">
+          <button class="nav__item is-active" data-title="Dashboard" data-route="dashboard">
+            <span class="nav__ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 13h7V4H4v9Zm9 7h7V11h-7v9ZM4 20h7v-5H4v5Zm9-11h7V4h-7v5Z" fill="currentColor"/></svg>
+            </span>
+            <span class="nav__text">Dashboard</span>
+          </button>
+
+          <button class="nav__item" data-title="Live Parking" data-route="live">
+            <span class="nav__ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 22s8-4 8-10V7l-8-4-8 4v5c0 6 8 10 8 10Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+            </span>
+            <span class="nav__text">Live Parking</span>
+          </button>
+
+          <button class="nav__item" data-title="Devices" data-route="devices">
+            <span class="nav__ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path d="M7 2h10v4H7V2Zm-2 6h14v14H5V8Zm3 3v2h8v-2H8Zm0 4v2h6v-2H8Z" fill="currentColor"/></svg>
+            </span>
+            <span class="nav__text">Devices</span>
+          </button>
+
+          <button class="nav__item" data-title="Logs" data-route="logs">
+            <span class="nav__ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 2h9l3 3v17H6V2Zm8 1v3h3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 10h8M8 14h8M8 18h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </span>
+            <span class="nav__text">Logs</span>
+          </button>
+
+          <button class="nav__item" data-title="Settings" data-route="settings">
+            <span class="nav__ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a7.9 7.9 0 0 0 .1-2l2-1.2-2-3.4-2.3.7a8 8 0 0 0-1.7-1l-.3-2.4H10l-.3 2.4a8 8 0 0 0-1.7 1l-2.3-.7-2 3.4 2 1.2a8 8 0 0 0 .1 2l-2 1.2 2 3.4 2.3-.7c.5.4 1.1.7 1.7 1l.3 2.4h4.8l.3-2.4c.6-.3 1.2-.6 1.7-1l2.3.7 2-3.4-2-1.2Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            </span>
+            <span class="nav__text">Settings</span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="sidebar__footer">
+        <div class="pill pill--info">
+          <span class="dot dot--online"></span>
+          <span>Backend: Connected</span>
+        </div>
+        <div class="sidebar__meta">
+          <div class="meta__k">Environment</div>
+          <div class="meta__v">University Demo</div>
+        </div>
+      </div>
+    </aside>
+
+    <div id="sidebarOverlay" class="sidebar-overlay" hidden></div>
+
+    <!-- Main -->
+    <main class="main">
+
+      <!-- Topbar -->
+      <header class="topbar glass">
+        <div class="topbar__left">
+          <button class="icon-btn topbar__menu" id="btnMobileMenu" aria-label="Open menu">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+
+          <div class="breadcrumbs">
+            <span class="crumb">SmartParking</span>
+            <span class="crumb-sep">/</span>
+            <span class="crumb is-current" id="crumbCurrent">Dashboard</span>
+          </div>
+        </div>
+
+        <div class="topbar__center">
+          <div class="search">
+            <span class="search__ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path d="M21 21l-4.3-4.3M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </span>
+            <input id="globalSearch" placeholder="Search slots, devices, logs..." />
+            <kbd class="kbd">Ctrl K</kbd>
+          </div>
+        </div>
+
+        <div class="topbar__right">
+          <button class="icon-btn" id="btnTheme" aria-label="Toggle theme">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+          </button>
+
+          <button class="icon-btn" id="btnRefresh" aria-label="Refresh">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+
+          <div class="profile">
+            <div class="profile__avatar"></div>
+            <div class="profile__text">
+              <div class="profile__name">Admin</div>
+              <div class="profile__role">Operator</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <section class="content">
+
+        <!-- DASHBOARD -->
+        <section class="route is-active" id="route-dashboard">
+          <div class="grid-2">
+            <div class="panel glass">
+              <div class="panel__head">
+                <h2 class="panel__title">Key Metrics</h2>
+                <div class="panel__actions">
+                  <button class="btn btn--ghost" id="btnSeedData">Seed Demo Data</button>
+                  <button class="btn btn--primary" id="btnAddSlot">Add Slot</button>
+                </div>
+              </div>
+
+              <div class="kpis">
+                <div class="kpi">
+                  <div class="kpi__label">Total Slots</div>
+                  <div class="kpi__value" id="kpiTotal">—</div>
+                  <div class="kpi__hint">Configured parking spots</div>
+                </div>
+
+                <div class="kpi">
+                  <div class="kpi__label">Occupied</div>
+                  <div class="kpi__value kpi__value--danger" id="kpiOcc">—</div>
+                  <div class="kpi__hint">Live occupancy</div>
+                </div>
+
+                <div class="kpi">
+                  <div class="kpi__label">Free</div>
+                  <div class="kpi__value kpi__value--success" id="kpiFree">—</div>
+                  <div class="kpi__hint">Available now</div>
+                </div>
+
+                <div class="kpi">
+                  <div class="kpi__label">Devices Online</div>
+                  <div class="kpi__value" id="kpiOnline">—</div>
+                  <div class="kpi__hint">IoT heartbeat OK</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel glass">
+              <div class="panel__head">
+                <h2 class="panel__title">Occupancy (Last 24h)</h2>
+                <div class="pill pill--info"><span class="dot dot--pulse"></span> Live</div>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="chartLine" height="120"></canvas>
+              </div>
+              <div class="panel__foot">
+                <div class="mini">
+                  <div class="mini__k">Peak hour</div>
+                  <div class="mini__v" id="peakHour">—</div>
+                </div>
+                <div class="mini">
+                  <div class="mini__k">Avg occupancy</div>
+                  <div class="mini__v" id="avgOcc">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="panel glass">
+              <div class="panel__head">
+                <h2 class="panel__title">Live Distribution</h2>
+                <div class="panel__sub">Free vs Occupied vs Offline</div>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="chartDonut" height="180"></canvas>
+              </div>
+              <div class="legend">
+                <div class="legend__item"><span class="swatch swatch--free"></span> Free</div>
+                <div class="legend__item"><span class="swatch swatch--occ"></span> Occupied</div>
+                <div class="legend__item"><span class="swatch swatch--off"></span> Offline</div>
+              </div>
+            </div>
+
+            <div class="panel glass">
+              <div class="panel__head">
+                <h2 class="panel__title">Latest Events</h2>
+                <button class="btn btn--ghost" data-route-jump="logs">View all</button>
+              </div>
+              <div class="feed" id="eventFeed"></div>
+            </div>
+
+            <div class="panel glass">
+              <div class="panel__head">
+                <h2 class="panel__title">System Health</h2>
+                <div class="pill pill--ok"><span class="dot dot--online"></span> OK</div>
+              </div>
+
+              <div class="health">
+                <div class="health__row">
+                  <div class="health__k">API latency</div>
+                  <div class="health__v"><span id="apiLatency">—</span> ms</div>
+                </div>
+                <div class="health__row">
+                  <div class="health__k">SignalR</div>
+                  <div class="health__v"><span class="pill pill--info">Ready</span></div>
+                </div>
+                <div class="health__row">
+                  <div class="health__k">Database</div>
+                  <div class="health__v"><span class="pill pill--info">Local</span></div>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="actions">
+                <button class="btn btn--primary" id="btnSimLive">Simulate Live Updates</button>
+                <button class="btn btn--ghost" id="btnClearSim">Stop</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel glass">
+            <div class="panel__head">
+              <h2 class="panel__title">Slots Overview</h2>
+              <div class="panel__actions">
+                <div class="seg">
+                  <button class="seg__btn is-active" data-filter="all">All</button>
+                  <button class="seg__btn" data-filter="free">Free</button>
+                  <button class="seg__btn" data-filter="occupied">Occupied</button>
+                  <button class="seg__btn" data-filter="offline">Offline</button>
+                </div>
+                <button class="btn btn--ghost" data-route-jump="live">Open Live Map</button>
+              </div>
+            </div>
+
+            <div class="table">
+              <div class="table__head">
+                <div class="table__row table__row--head">
+                  <div class="cell cell--w120">Slot</div>
+                  <div class="cell">Zone</div>
+                  <div class="cell cell--w160">Status</div>
+                  <div class="cell cell--w160">Distance</div>
+                  <div class="cell cell--w200">Last Update</div>
+                  <div class="cell cell--w160">Device</div>
+                  <div class="cell cell--w140">Actions</div>
+                </div>
+              </div>
+              <div class="table__body" id="slotsTable"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- LIVE PARKING -->
+        <section class="route" id="route-live">
+          <div class="grid-2">
+            <div class="panel glass">
+              <div class="panel__head">
+                <h2 class="panel__title">Live Parking Map</h2>
+                <div class="panel__actions">
+                  <button class="btn btn--ghost" id="btnLegend">Legend</button>
+                  <button class="btn btn--primary" id="btnReassign">Reassign Device</button>
+                </div>
+              </div>
+
+              <div class="map">
+                <div class="map__header">
+                  <div class="pill pill--info"><span class="dot dot--pulse"></span> Real-time</div>
+                  <div class="map__meta">Pilot: NODE-001 • Sensors: 2</div>
+                </div>
+
+                <div class="slot-map" id="slotMap"></div>
+
+                <div class="map__footer">
+                  <div class="hint">
+                    Click a slot to view details. Ready for SignalR push.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel glass">
+              <div class="panel__head">
+                <h2 class="panel__title">Slot Details</h2>
+                <div class="pill pill--info" id="slotDetailPill">Select a slot</div>
+              </div>
+
+              <div class="details" id="slotDetails">
+                <div class="details__empty">
+                  Select a slot from the map to show device, distance, timestamps and actions.
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="actions">
+                <button class="btn btn--primary" id="btnForceRefresh">Force Refresh</button>
+                <button class="btn btn--ghost" id="btnMarkOffline">Mark Offline</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- DEVICES -->
+        <section class="route" id="route-devices">
+          <div class="panel glass">
+            <div class="panel__head">
+              <h2 class="panel__title">IoT Devices</h2>
+              <div class="panel__actions">
+                <input class="input" id="deviceSearch" placeholder="Search device code..." />
+                <button class="btn btn--primary" id="btnAddDevice">Add Device</button>
+              </div>
+            </div>
+
+            <div class="cards" id="devicesGrid"></div>
+          </div>
+        </section>
+
+        <!-- LOGS -->
+        <section class="route" id="route-logs">
+          <div class="grid-2">
+            <div class="panel glass">
+              <div class="panel__head">
+                <h2 class="panel__title">Event Logs</h2>
+                <div class="panel__actions">
+                  <select class="select" id="logLevel">
+                    <option value="all">All Levels</option>
+                    <option value="info">Info</option>
+                    <option value="warn">Warn</option>
+                    <option value="error">Error</option>
+                  </select>
+                  <button class="btn btn--ghost" id="btnExport">Export</button>
+                </div>
+              </div>
+
+              <div class="loglist" id="logList"></div>
+            </div>
+
+            <div class="panel glass">
+              <div class="panel__head">
+                <h2 class="panel__title">Live Stream</h2>
+                <div class="pill pill--info"><span class="dot dot--pulse"></span> Listening</div>
+              </div>
+
+              <div class="terminal" id="terminal"></div>
+
+              <div class="divider"></div>
+
+              <div class="actions">
+                <button class="btn btn--primary" id="btnInject">Inject Test Event</button>
+                <button class="btn btn--ghost" id="btnClearLogs">Clear</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SETTINGS -->
+        <section class="route" id="route-settings">
+          <div class="grid-2">
+            <div class="panel glass">
+              <div class="panel__head">
+                <h2 class="panel__title">System Settings</h2>
+                <div class="panel__sub">These map directly to your ASP.NET config</div>
+              </div>
+
+              <div class="form">
+                <label class="field">
+                  <span>Occupancy Threshold (cm)</span>
+                  <input class="input" id="threshold" type="number" value="15" min="1" max="80" />
+                </label>
+
+                <label class="field">
+                  <span>Telemetry Interval (sec)</span>
+                  <input class="input" id="interval" type="number" value="5" min="1" max="60" />
+                </label>
+
+                <label class="field">
+                  <span>Offline Timeout (sec)</span>
+                  <input class="input" id="offlineTimeout" type="number" value="20" min="5" max="300" />
+                </label>
+
+                <div class="field-row">
+                  <label class="toggle">
+                    <input type="checkbox" id="enableSignalR" checked />
+                    <span class="toggle__ui"></span>
+                    <span>Enable SignalR</span>
+                  </label>
+
+                  <label class="toggle">
+                    <input type="checkbox" id="enableAudit" checked />
+                    <span class="toggle__ui"></span>
+                    <span>Audit Logs</span>
+                  </label>
+                </div>
+
+                <div class="actions">
+                  <button class="btn btn--primary" id="btnSaveSettings">Save</button>
+                  <button class="btn btn--ghost" id="btnResetSettings">Reset</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel glass">
+              <div class="panel__head">
+                <h2 class="panel__title">API Endpoints</h2>
+                <div class="panel__sub">Placeholders for your .NET API</div>
+              </div>
+
+              <div class="kv">
+                <div class="kv__row">
+                  <div class="kv__k">POST Telemetry</div>
+                  <div class="kv__v">/api/iot/parking/update</div>
+                </div>
+                <div class="kv__row">
+                  <div class="kv__k">GET Slots</div>
+                  <div class="kv__v">/api/admin/slots</div>
+                </div>
+                <div class="kv__row">
+                  <div class="kv__k">GET Devices</div>
+                  <div class="kv__v">/api/admin/devices</div>
+                </div>
+                <div class="kv__row">
+                  <div class="kv__k">SignalR Hub</div>
+                  <div class="kv__v">/hubs/parking</div>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="note">
+                This UI is structured to be dropped into Blazor (Layout + Pages) with minimal changes.
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js?v=1.5"></script>
+</body>
+</html>

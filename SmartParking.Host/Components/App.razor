@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <title>Smart Parking — Admin</title>
+    
+    <ResourcePreloader />
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+  <link rel="stylesheet" href="styles.css?v=1.5" />
+
+    <!-- Charts (professional + lightweight) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <ImportMap />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <HeadOutlet />
+</head>
+
+<body>
+    <!-- Ambient background -->
+    <div class="bg">
+        <div class="bg__orb bg__orb--1"></div>
+        <div class="bg__orb bg__orb--2"></div>
+        <div class="bg__grid"></div>
+    </div>
+
+    <!-- Toasts -->
+    <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- Modal -->
+    <div id="modalBackdrop" class="modal-backdrop" hidden>
+        <div class="modal glass" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <div class="modal__head">
+                <h3 id="modalTitle" class="modal__title">Modal</h3>
+                <button class="icon-btn" data-modal-close aria-label="Close">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <div id="modalBody" class="modal__body"></div>
+            <div class="modal__foot">
+                <button class="btn btn--ghost" data-modal-close>Cancel</button>
+                <button id="modalPrimary" class="btn btn--primary">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <Routes />
+    <ReconnectModal />
+    
+    <script src="@Assets["app.js"]"></script>
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
+</body>
+
+</html>

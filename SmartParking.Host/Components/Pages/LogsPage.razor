@@ -1,0 +1,69 @@
+@page "/logs"
+@rendermode InteractiveServer
+
+<PageTitle>Logs - Smart Parking</PageTitle>
+
+<div class="grid-2">
+    <div class="panel glass">
+        <div class="panel__head">
+            <h2 class="panel__title">Event Logs</h2>
+            <div class="panel__actions">
+                <select class="select" id="logLevel">
+                    <option value="all">All Levels</option>
+                    <option value="info">Info</option>
+                    <option value="warn">Warn</option>
+                    <option value="error">Error</option>
+                </select>
+                <button class="btn btn--ghost" id="btnExport">Export</button>
+            </div>
+        </div>
+
+        <div class="loglist" id="logList">
+            <div class="log">
+                <div>
+                    <div class="log__msg">Slot A2 mapped to NODE-001/S2</div>
+                    <div class="log__meta">Config • Jan 27, 20:38</div>
+                </div>
+                <div class="level info">INFO</div>
+            </div>
+            <div class="log">
+                <div>
+                    <div class="log__msg">Slot A1 mapped to NODE-001/S1</div>
+                    <div class="log__meta">Config • Jan 27, 20:38</div>
+                </div>
+                <div class="level info">INFO</div>
+            </div>
+            <div class="log">
+                <div>
+                    <div class="log__msg">Pilot initialized: NODE-001 with 2 sensors</div>
+                    <div class="log__meta">System • Jan 27, 20:38</div>
+                </div>
+                <div class="level info">INFO</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel glass">
+        <div class="panel__head">
+            <h2 class="panel__title">Live Stream</h2>
+            <div class="pill pill--info"><span class="dot dot--pulse"></span> Listening</div>
+        </div>
+
+        <div class="terminal" id="terminal">
+            <div class="line"><span class="t">[INFO]</span> Jan 27, 20:38 — Pilot initialized: NODE-001 with 2 sensors
+            </div>
+            <div class="line"><span class="t">[INFO]</span> Jan 27, 20:38 — Slot A1 mapped to NODE-001/S1</div>
+            <div class="line"><span class="t">[INFO]</span> Jan 27, 20:38 — Slot A2 mapped to NODE-001/S2</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="actions">
+            <button class="btn btn--primary" id="btnInject">Inject Test Event</button>
+            <button class="btn btn--ghost" id="btnClearLogs">Clear</button>
+        </div>
+    </div>
+</div>
+
+@code {
+}

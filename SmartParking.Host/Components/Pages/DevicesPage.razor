@@ -1,0 +1,42 @@
+@page "/devices"
+@rendermode InteractiveServer
+
+<PageTitle>Devices - Smart Parking</PageTitle>
+
+<div class="panel glass">
+    <div class="panel__head">
+        <h2 class="panel__title">IoT Devices</h2>
+        <div class="panel__actions">
+            <input class="input" id="deviceSearch" placeholder="Search device code...">
+            <button class="btn btn--primary" id="btnAddDevice">Add Device</button>
+        </div>
+    </div>
+
+    <div class="cards" id="devicesGrid">
+        <div class="card">
+            <div class="card__head">
+                <div>
+                    <div class="card__title">NODE-001</div>
+                    <div class="card__sub">Pilot device with 2 ultrasonic channels</div>
+                </div>
+                <span class="pill pill--ok"><span class="dot dot--online"></span> ONLINE</span>
+            </div>
+
+            <div class="card__body">
+                <div class="kv2"><span>Last seen</span><span>Jan 27, 20:38</span></div>
+                <div class="kv2"><span>S1 → Slot</span><span>A1</span></div>
+                <div class="kv2"><span>S2 → Slot</span><span>A2</span></div>
+                <div class="actions">
+                    <button class="btn btn--ghost" data-dev-action="ping"
+                        data-dev-id="b737a3c0-0c43-4ebc-9f49-e5ed101e04b8">Ping</button>
+                    <button class="btn btn--primary" data-dev-action="map"
+                        data-dev-id="b737a3c0-0c43-4ebc-9f49-e5ed101e04b8">Map Sensors</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+}

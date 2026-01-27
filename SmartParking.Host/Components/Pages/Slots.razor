@@ -1,0 +1,153 @@
+@page "/admin/slots"
+@using SmartParking.Application.Contracts
+@using Microsoft.AspNetCore.SignalR.Client
+@rendermode InteractiveServer
+@inject SmartParking.Application.Services.ISlotService SlotService
+@inject NavigationManager NavigationManager
+
+
+<h3>Slots</h3>
+<p><b>Hub:</b> @_hubStatus</p>
+<p><b>Last Push:</b> @_lastPush</p>
+
+@if (_items is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Label</th>
+                <th>Zone</th>
+                <th>Status</th>
+                <th>Distance (cm)</th>
+                <th>Updated</th>
+                <th>Device/Sensor</th>
+                <th>Threshold (cm)</th>
+                <th>Actions</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in _items)
+            {
+                <tr>
+                    <td>@s.Label</td>
+                    <td>@s.Zone</td>
+                    <td>@s.Status</td>
+                    <td>@s.LastDistanceCm</td>
+                    <td>@(s.LastUpdateAt == DateTimeOffset.MinValue ? "-" : s.LastUpdateAt.ToString("u"))</td>
+                    <td>@($"{s.DeviceCode}/{s.SensorCode}")</td>
+                    <td style="max-width:140px;">
+                        <input class="form-control" type="number" step="0.1" @bind="_thresholdEdits[s.Label]" />
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-success" @onclick="() => SaveThreshold(s.Label)">Save</button>
+                    </td>
+
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<SlotDto>? _items;
+private Dictionary<string, double> _thresholdEdits = new();
+
+    private Microsoft.AspNetCore.SignalR.Client.HubConnection? _hub;
+    private string _hubStatus = "disconnected";
+    private string _lastPush = "-";
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        _items = await SlotService.GetAllAsync(CancellationToken.None);
+    _thresholdEdits = _items.ToDictionary(x => x.Label, x => x.OccupiedThresholdCm);
+
+        _hub = new HubConnectionBuilder()
+        .WithUrl(NavigationManager.ToAbsoluteUri("/hubs/parking"))
+        .WithAutomaticReconnect()
+        .Build();
+
+        _hub.Reconnecting += ex =>
+        {
+            _hubStatus = "reconnecting";
+            return InvokeAsync(StateHasChanged);
+        };
+
+        _hub.Reconnected += _ =>
+        {
+            _hubStatus = "connected";
+            return InvokeAsync(StateHasChanged);
+        };
+
+        _hub.Closed += ex =>
+        {
+            _hubStatus = "closed";
+            return InvokeAsync(StateHasChanged);
+        };
+
+        _hub.On<TelemetryIngestResultDto>("slotUpdated", msg =>
+        {
+            Console.WriteLine("Sending slotUpdated...");
+
+            _lastPush = $"{msg.SlotLabel} -> {msg.Status}";
+
+            if (_items is null || msg.SlotLabel is null)
+                return Task.CompletedTask;
+
+            var slot = _items.FirstOrDefault(x => x.Label == msg.SlotLabel);
+            if (slot is null)
+                return Task.CompletedTask;
+
+            var idx = _items.IndexOf(slot);
+
+            _items[idx] = slot with
+            {
+                Status = msg.Status ?? slot.Status,
+                LastDistanceCm = msg.DistanceCm ?? slot.LastDistanceCm,
+                LastUpdateAt = msg.UpdatedAt ?? slot.LastUpdateAt
+            };
+
+
+            return InvokeAsync(StateHasChanged);
+        });
+
+        try
+        {
+            await _hub.StartAsync();
+            _hubStatus = "connected";
+        }
+        catch (Exception ex)
+        {
+            _hubStatus = "error: " + ex.Message;
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+private async Task SaveThreshold(string label)
+{
+    if (!_thresholdEdits.TryGetValue(label, out var value))
+        return;
+
+    var ok = await SlotService.UpdateThresholdAsync(label, value, CancellationToken.None);
+    if (!ok)
+        return;
+
+    // Refresh single row (simple way: reload list)
+    _items = await SlotService.GetAllAsync(CancellationToken.None);
+
+    // Keep edits consistent
+    _thresholdEdits = _items.ToDictionary(x => x.Label, x => x.OccupiedThresholdCm);
+}
+    public async ValueTask DisposeAsync()
+    {
+        if (_hub is not null)
+        {
+            await _hub.DisposeAsync();
+        }
+    }
+}

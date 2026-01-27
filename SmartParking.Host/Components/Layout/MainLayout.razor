@@ -1,0 +1,142 @@
+﻿@inherits LayoutComponentBase
+
+<div class="app" id="app">
+    <!-- Sidebar -->
+    <aside class="sidebar glass" id="sidebar">
+        <div class="sidebar__brand">
+            <div class="brand">
+                <div class="brand__mark" aria-hidden="true"></div>
+                <div class="brand__text">
+                    <div class="brand__name">SmartParking</div>
+                    <div class="brand__sub">Admin Console</div>
+                </div>
+            </div>
+
+            <button class="icon-btn sidebar__collapse" id="btnCollapse" aria-label="Collapse sidebar">
+                <svg viewBox="0 0 24 24" width="18" height="18">
+                    <path d="M14 7l-5 5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="sidebar__section">
+            <div class="sidebar__label">Navigation</div>
+            <nav class="nav" id="nav">
+                <a href="/" class="nav__item @GetActiveClass("/")" data-title="Dashboard">
+                    <span class="nav__ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 13h7V4H4v9Zm9 7h7V11h-7v9ZM4 20h7v-5H4v5Zm9-11h7V4h-7v5Z" fill="currentColor"/></svg>
+                    </span>
+                    <span class="nav__text">Dashboard</span>
+                </a>
+
+                <a href="/live" class="nav__item @GetActiveClass("/live")" data-title="Live Parking">
+                    <span class="nav__ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 22s8-4 8-10V7l-8-4-8 4v5c0 6 8 10 8 10Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                    </span>
+                    <span class="nav__text">Live Parking</span>
+                </a>
+
+                <a href="/devices" class="nav__item @GetActiveClass("/devices")" data-title="Devices">
+                    <span class="nav__ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M7 2h10v4H7V2Zm-2 6h14v14H5V8Zm3 3v2h8v-2H8Zm0 4v2h6v-2H8Z" fill="currentColor"/></svg>
+                    </span>
+                    <span class="nav__text">Devices</span>
+                </a>
+
+                <a href="/logs" class="nav__item @GetActiveClass("/logs")" data-title="Logs">
+                    <span class="nav__ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 2h9l3 3v17H6V2Zm8 1v3h3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 10h8M8 14h8M8 18h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </span>
+                    <span class="nav__text">Logs</span>
+                </a>
+
+                <a href="/settings" class="nav__item @GetActiveClass("/settings")" data-title="Settings">
+                    <span class="nav__ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a7.9 7.9 0 0 0 .1-2l2-1.2-2-3.4-2.3.7a8 8 0 0 0-1.7-1l-.3-2.4H10l-.3 2.4a8 8 0 0 0-1.7 1l-2.3-.7-2 3.4 2 1.2a8 8 0 0 0 .1 2l-2 1.2 2 3.4 2.3-.7c.5.4 1.1.7 1.7 1l.3 2.4h4.8l.3-2.4c.6-.3 1.2-.6 1.7-1l2.3.7 2-3.4-2-1.2Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                    </span>
+                    <span class="nav__text">Settings</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="sidebar__footer">
+            <div class="pill pill--info">
+                <span class="dot dot--online"></span>
+                <span>Backend: Connected</span>
+            </div>
+            <div class="sidebar__meta">
+                <div class="meta__k">Environment</div>
+                <div class="meta__v">University Demo</div>
+            </div>
+        </div>
+    </aside>
+
+    <div id="sidebarOverlay" class="sidebar-overlay" hidden></div>
+
+    <!-- Main -->
+    <main class="main">
+        <!-- Topbar -->
+        <header class="topbar glass">
+            <div class="topbar__left">
+                <button class="icon-btn topbar__menu" id="btnMobileMenu" aria-label="Open menu">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+
+                <div class="breadcrumbs">
+                    <span class="crumb">SmartParking</span>
+                    <span class="crumb-sep">/</span>
+                    <span class="crumb is-current" id="crumbCurrent">@GetPageTitle()</span>
+                </div>
+            </div>
+
+            
+
+            <div class="topbar__right">
+                <button class="icon-btn" id="btnTheme" aria-label="Toggle theme">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
+
+                <button class="icon-btn" id="btnRefresh" aria-label="Refresh">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+
+                <div class="profile">
+                    <div class="profile__avatar"></div>
+                    <div class="profile__text">
+                        <div class="profile__name">Admin</div>
+                        <div class="profile__role">Operator</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <section class="content">
+            @Body
+        </section>
+    </main>
+</div>
+
+@code {
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    private string GetActiveClass(string path)
+    {
+        var currentPath = new Uri(NavigationManager.Uri).AbsolutePath;
+        return currentPath == path ? "is-active" : "";
+    }
+
+    private string GetPageTitle()
+    {
+        var currentPath = new Uri(NavigationManager.Uri).AbsolutePath;
+        return currentPath switch
+        {
+            "/" => "Dashboard",
+            "/live" => "Live Parking",
+            "/devices" => "Devices",
+            "/logs" => "Logs",
+            "/settings" => "Settings",
+            _ => "Dashboard"
+        };
+    }
+}

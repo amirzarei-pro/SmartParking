@@ -1,0 +1,95 @@
+@page "/live"
+@rendermode InteractiveServer
+
+<PageTitle>Live Parking - Smart Parking</PageTitle>
+
+
+<div class="grid-2">
+    <div class="panel glass">
+        <div class="panel__head">
+            <h2 class="panel__title">Live Parking Map</h2>
+            <div class="panel__actions">
+                <button class="btn btn--ghost" id="btnLegend">Legend</button>
+                <button class="btn btn--primary" id="btnReassign">Reassign Device</button>
+            </div>
+        </div>
+
+        <div class="map">
+            <div class="map__header">
+                <div class="pill pill--info"><span class="dot dot--pulse"></span> Real-time</div>
+                <div class="map__meta">Pilot: NODE-001 • Sensors: 2</div>
+            </div>
+
+            <div class="slot-map" id="slotMap">
+                <div class="slot-tile free" data-id="1cef1c73-938d-45d7-8b58-c7086b116b22"
+                    style="outline: rgba(79, 195, 255, 0.55) solid 2px;">
+                    <div class="slot-tile__id">A1</div>
+                    <div class="slot-tile__sub">NODE-001/S1</div>
+                    <div class="slot-tile__sub">32 cm • Jan 27, 20:38</div>
+                </div>
+                <div class="slot-tile occupied" data-id="31a852d4-f96e-4d2a-942d-cbc54b666bb9" style="outline: none;">
+                    <div class="slot-tile__id">A2</div>
+                    <div class="slot-tile__sub">NODE-001/S2</div>
+                    <div class="slot-tile__sub">12 cm • Jan 27, 20:38</div>
+                </div>
+            </div>
+
+            <div class="map__footer">
+                <div class="hint">
+                    Click a slot to view details. Ready for SignalR push.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel glass">
+        <div class="panel__head">
+            <h2 class="panel__title">Slot Details</h2>
+            <div class="pill pill--info" id="slotDetailPill">A1 • FREE</div>
+        </div>
+
+        <div class="details" id="slotDetails">
+            <div class="details__box">
+                <div class="details__row">
+                    <div class="details__k">Slot</div>
+                    <div class="details__v">A1</div>
+                </div>
+                <div class="details__row">
+                    <div class="details__k">Device</div>
+                    <div class="details__v">NODE-001</div>
+                </div>
+                <div class="details__row">
+                    <div class="details__k">Sensor Channel</div>
+                    <div class="details__v">S1</div>
+                </div>
+                <div class="details__row">
+                    <div class="details__k">Status</div>
+                    <div class="details__v"><span class="badge badge--free">FREE</span></div>
+                </div>
+                <div class="details__row">
+                    <div class="details__k">Distance</div>
+                    <div class="details__v">32 cm</div>
+                </div>
+                <div class="details__row">
+                    <div class="details__k">Last Update</div>
+                    <div class="details__v">Jan 27, 20:38</div>
+                </div>
+                <div class="divider"></div>
+                <div class="details__row">
+                    <button class="btn btn--primary" id="btnSimOne">Simulate Telemetry</button>
+                    <button class="btn btn--ghost" id="btnToggleOffline">Toggle Offline</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="actions">
+            <button class="btn btn--primary" id="btnForceRefresh">Force Refresh</button>
+            <button class="btn btn--ghost" id="btnMarkOffline">Mark Offline</button>
+        </div>
+    </div>
+</div>
+
+@code {
+}
