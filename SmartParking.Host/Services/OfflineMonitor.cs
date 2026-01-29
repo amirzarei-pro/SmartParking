@@ -39,7 +39,7 @@ public sealed class OfflineMonitor : BackgroundService
             using var scope = _scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<SmartParkingDbContext>();
 
-            var cutoff = DateTimeOffset.UtcNow.AddSeconds(-_opt.TimeoutSeconds);
+            var cutoff = DateTimeOffset.Now.AddSeconds(-_opt.TimeoutSeconds);
 
             // Slot هایی که Sensor دارند ولی سنسور مدت طولانی دیده نشده
             var slots = await db.Slots
@@ -56,7 +56,7 @@ public sealed class OfflineMonitor : BackgroundService
                 if (lastSeen < cutoff && slot.Status != SlotStatus.Offline)
                 {
                     slot.Status = SlotStatus.Offline;
-                    slot.LastUpdateAt = DateTimeOffset.UtcNow; // زمان تغییر وضعیت
+                    slot.LastUpdateAt = DateTimeOffset.Now; // زمان تغییر وضعیت
                     changedSlots.Add((slot.Label, slot.LastDistanceCm, slot.LastUpdateAt));
                 }
             }

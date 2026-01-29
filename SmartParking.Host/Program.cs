@@ -21,6 +21,7 @@ builder.Services.AddDbContext<SmartParkingDbContext>(opt =>
 });
 
 builder.Services.AddScoped<ISlotService, SlotService>();
+builder.Services.AddScoped<IDeviceService, DeviceService>();
 builder.Services.AddScoped<IIotService, IotService>();
 builder.Services.AddScoped<ITelemetryLogService, TelemetryLogService>();
 
@@ -52,10 +53,18 @@ app.MapRazorComponents<App>()
 
 
 
-using (var scope = app.Services.CreateScope())
+try
 {
-    var db = scope.ServiceProvider.GetRequiredService<SmartParkingDbContext>();
-    await SmartParking.Host.Seed.SeedRunner.EnsureSeedAsync(db, CancellationToken.None);
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<SmartParkingDbContext>();
+        await SmartParking.Host.Seed.SeedRunner.EnsureSeedAsync(db, CancellationToken.None);
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Warning: Could not seed database: {ex.Message}");
+    Console.WriteLine("Application will continue without database. Some features may not work.");
 }
 
 app.Run();

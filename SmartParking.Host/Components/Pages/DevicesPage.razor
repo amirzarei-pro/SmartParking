@@ -1,5 +1,8 @@
 @page "/devices"
 @rendermode InteractiveServer
+@using SmartParking.Application.Services
+@using SmartParking.Application.Contracts
+@inject IDeviceService DeviceService
 
 <PageTitle>Devices - Smart Parking</PageTitle>
 
@@ -7,36 +10,436 @@
     <div class="panel__head">
         <h2 class="panel__title">IoT Devices</h2>
         <div class="panel__actions">
-            <input class="input" id="deviceSearch" placeholder="Search device code...">
-            <button class="btn btn--primary" id="btnAddDevice">Add Device</button>
+            <input class="input" 
+                   id="deviceSearch" 
+                   placeholder="Search device code..."
+                   @oninput="e => OnSearchInput(e)">
+            <button class="btn btn--primary" id="btnAddDevice" @onclick="OpenAddModal">Add Device</button>
         </div>
     </div>
 
     <div class="cards" id="devicesGrid">
-        <div class="card">
-            <div class="card__head">
-                <div>
-                    <div class="card__title">NODE-001</div>
-                    <div class="card__sub">Pilot device with 2 ultrasonic channels</div>
-                </div>
-                <span class="pill pill--ok"><span class="dot dot--online"></span> ONLINE</span>
+        @if (isLoading)
+        {
+            <div style="grid-column: 1 / -1; padding: 2rem; text-align: center; color: #999;">
+                Loading devices...
             </div>
-
-            <div class="card__body">
-                <div class="kv2"><span>Last seen</span><span>Jan 27, 20:38</span></div>
-                <div class="kv2"><span>S1 → Slot</span><span>A1</span></div>
-                <div class="kv2"><span>S2 → Slot</span><span>A2</span></div>
-                <div class="actions">
-                    <button class="btn btn--ghost" data-dev-action="ping"
-                        data-dev-id="b737a3c0-0c43-4ebc-9f49-e5ed101e04b8">Ping</button>
-                    <button class="btn btn--primary" data-dev-action="map"
-                        data-dev-id="b737a3c0-0c43-4ebc-9f49-e5ed101e04b8">Map Sensors</button>
-
-                </div>
+        }
+        else if (filteredDevices.Count == 0)
+        {
+            <div style="grid-column: 1 / -1; padding: 2rem; text-align: center; color: #999;">
+                @(devices.Count == 0 ? "No devices found. Add your first device!" : "No devices found matching your search.")
             </div>
-        </div>
+        }
+        else
+        {
+            @foreach (var device in filteredDevices)
+            {
+                var isOnline = (DateTimeOffset.Now - device.LastSeenAt).TotalMinutes < 5;
+                var statusClass = isOnline ? "ok" : "offline";
+                var statusDot = isOnline ? "online" : "offline";
+                var statusText = isOnline ? "ONLINE" : "OFFLINE";
+
+                <div class="card">
+                    <div class="card__head">
+                        <div>
+                            <div class="card__title">@device.Code</div>
+                            <div class="card__sub">@device.Sensors.Count sensor(s) assigned</div>
+                        </div>
+                        <span class="pill pill--@statusClass"><span class="dot dot--@statusDot"></span> @statusText</span>
+                    </div>
+
+                    <div class="card__body">
+                        <div class="kv2"><span>Code</span><span>@device.Code</span></div>
+                        <div class="kv2"><span>API Key</span><span class="api-key">@device.ApiKey</span></div>
+                        <div class="kv2"><span>Last seen</span><span>@device.LastSeenAt.ToString("MMM dd, HH:mm")</span></div>
+                        @if (device.Sensors.Count > 0)
+                        {
+                            @foreach (var sensor in device.Sensors)
+                            {
+                                <div class="kv2"><span>@sensor.SensorCode → Slot</span><span>@(sensor.SlotLabel ?? "Unmapped")</span></div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="kv2" style="color: #999;"><span>No sensors</span><span>-</span></div>
+                        }
+                        <div class="actions">
+                            <button class="btn btn--primary" @onclick="() => OpenEditModal(device)">Edit</button>
+                            <button class="btn btn--ghost" @onclick="() => OpenDeleteConfirm(device)" style="color: #e74c3c;">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
     </div>
 </div>
 
+@* Add/Edit Device Modal *@
+@if (showDeviceModal)
+{
+    <div class="modal-backdrop" @onclick="CloseModal">
+        <div class="modal" @onclick:stopPropagation="true">
+            <div class="modal__header">
+                <h3>@(isEditMode ? "Edit Device" : "Add New Device")</h3>
+                <button class="modal__close" @onclick="CloseModal">&times;</button>
+            </div>
+            <div class="modal__body">
+                <div class="form-group">
+                    <label for="deviceCode">Device Code</label>
+                    <input type="text" 
+                           id="deviceCode" 
+                           class="input" 
+                           placeholder="e.g., NODE-001"
+                           @bind="deviceCode" 
+                           @bind:event="oninput" />
+                </div>
+                <div class="form-group">
+                    <label for="deviceApiKey">API Key</label>
+                    <input type="text" 
+                           id="deviceApiKey" 
+                           class="input" 
+                           placeholder="Leave empty to auto-generate"
+                           @bind="deviceApiKey" 
+                           @bind:event="oninput" />
+                    <small style="color: #999; font-size: 0.8rem;">@(isEditMode ? "Leave empty to keep current key" : "Leave empty to auto-generate")</small>
+                </div>
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="error-message">@errorMessage</div>
+                }
+            </div>
+            <div class="modal__footer">
+                <button class="btn btn--ghost" @onclick="CloseModal">Cancel</button>
+                <button class="btn btn--primary" @onclick="SaveDevice" disabled="@isSaving">
+                    @(isSaving ? "Saving..." : (isEditMode ? "Update" : "Create"))
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@* Delete Confirmation Modal *@
+@if (showDeleteConfirm)
+{
+    <div class="modal-backdrop" @onclick="CloseDeleteConfirm">
+        <div class="modal" @onclick:stopPropagation="true">
+            <div class="modal__header">
+                <h3>Confirm Delete</h3>
+                <button class="modal__close" @onclick="CloseDeleteConfirm">&times;</button>
+            </div>
+            <div class="modal__body">
+                <p>Are you sure you want to delete device <strong>@deviceToDelete?.Code</strong>?</p>
+                <p style="color: #e74c3c; font-size: 0.9rem;">This action cannot be undone. All associated sensors will be unlinked.</p>
+            </div>
+            <div class="modal__footer">
+                <button class="btn btn--ghost" @onclick="CloseDeleteConfirm">Cancel</button>
+                <button class="btn btn--danger" @onclick="ConfirmDelete" disabled="@isDeleting">
+                    @(isDeleting ? "Deleting..." : "Delete")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        backdrop-filter: blur(4px);
+    }
+    
+    .modal {
+        background: var(--glass-bg, rgba(30, 30, 40, 0.95));
+        border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+        border-radius: 12px;
+        width: 90%;
+        max-width: 450px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    
+    .modal__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    }
+    
+    .modal__header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    
+    .modal__close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #999;
+        padding: 0;
+        line-height: 1;
+    }
+    
+    .modal__close:hover {
+        color: #fff;
+    }
+    
+    .modal__body {
+        padding: 1.5rem;
+    }
+    
+    .modal__footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+    
+    .form-group .input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+    }
+    
+    .error-message {
+        color: #e74c3c;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        background: rgba(231, 76, 60, 0.1);
+        border-radius: 6px;
+    }
+    
+    .btn--danger {
+        background: #e74c3c;
+        color: white;
+        border: none;
+    }
+    
+    .btn--danger:hover {
+        background: #c0392b;
+    }
+    
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .api-key {
+        font-family: monospace;
+        font-size: 0.85rem;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        word-break: break-all;
+    }
+</style>
+
 @code {
+    private List<DeviceDto> devices = new();
+    private List<DeviceDto> filteredDevices = new();
+    private string searchFilter = "";
+    private bool isLoading = true;
+
+    // Modal state
+    private bool showDeviceModal = false;
+    private bool isEditMode = false;
+    private string deviceCode = "";
+    private string deviceApiKey = "";
+    private Guid? editingDeviceId = null;
+    private string errorMessage = "";
+    private bool isSaving = false;
+
+    // Delete confirmation state
+    private bool showDeleteConfirm = false;
+    private DeviceDto? deviceToDelete = null;
+    private bool isDeleting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDevices();
+    }
+
+    private async Task LoadDevices()
+    {
+        isLoading = true;
+        try
+        {
+            devices = await DeviceService.GetAllAsync(CancellationToken.None);
+            ApplyFilter();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading devices: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        searchFilter = e.Value?.ToString() ?? "";
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        if (string.IsNullOrWhiteSpace(searchFilter))
+        {
+            filteredDevices = devices;
+        }
+        else
+        {
+            filteredDevices = devices
+                .Where(d => d.Code.Contains(searchFilter, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+
+    private void OpenAddModal()
+    {
+        isEditMode = false;
+        deviceCode = "";
+        deviceApiKey = "";
+        editingDeviceId = null;
+        errorMessage = "";
+        showDeviceModal = true;
+    }
+
+    private void OpenEditModal(DeviceDto device)
+    {
+        isEditMode = true;
+        deviceCode = device.Code;
+        deviceApiKey = device.ApiKey;
+        editingDeviceId = device.Id;
+        errorMessage = "";
+        showDeviceModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showDeviceModal = false;
+        deviceCode = "";
+        deviceApiKey = "";
+        editingDeviceId = null;
+        errorMessage = "";
+        isSaving = false;
+    }
+
+    private async Task SaveDevice()
+    {
+        errorMessage = "";
+
+        if (string.IsNullOrWhiteSpace(deviceCode))
+        {
+            errorMessage = "Device code is required.";
+            return;
+        }
+
+        if (deviceCode.Length < 3)
+        {
+            errorMessage = "Device code must be at least 3 characters.";
+            return;
+        }
+
+        isSaving = true;
+
+        try
+        {
+            bool success;
+
+            if (isEditMode && editingDeviceId.HasValue)
+            {
+                success = await DeviceService.UpdateAsync(editingDeviceId.Value, deviceCode.Trim(), deviceApiKey.Trim(), CancellationToken.None);
+                if (!success)
+                {
+                    errorMessage = "Failed to update device. Code may already exist.";
+                }
+            }
+            else
+            {
+                success = await DeviceService.CreateAsync(deviceCode.Trim(), deviceApiKey.Trim(), CancellationToken.None);
+                if (!success)
+                {
+                    errorMessage = "Failed to create device. Code may already exist.";
+                }
+            }
+
+            if (success)
+            {
+                CloseModal();
+                await LoadDevices();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void OpenDeleteConfirm(DeviceDto device)
+    {
+        deviceToDelete = device;
+        showDeleteConfirm = true;
+    }
+
+    private void CloseDeleteConfirm()
+    {
+        showDeleteConfirm = false;
+        deviceToDelete = null;
+        isDeleting = false;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (deviceToDelete == null) return;
+
+        isDeleting = true;
+
+        try
+        {
+            var success = await DeviceService.DeleteAsync(deviceToDelete.Id, CancellationToken.None);
+            if (success)
+            {
+                CloseDeleteConfirm();
+                await LoadDevices();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting device: {ex.Message}");
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
 }

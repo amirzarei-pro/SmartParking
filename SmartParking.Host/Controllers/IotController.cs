@@ -47,4 +47,27 @@ public sealed class IotController : ControllerBase
 
     [HttpGet("ping")]
     public IActionResult Ping() => Ok(new { ok = true });
+
+
+    [HttpPost("boot")]
+    public async Task<IActionResult> Boot([FromBody] DeviceRegisterDto dto, CancellationToken ct)
+    {
+        var key = Request.Headers["X-Device-Key"].ToString();
+        if (string.IsNullOrWhiteSpace(key))
+           return Unauthorized("Missing X-Device-Key.");
+
+        try
+        {
+            var result = await _iot.RegisterSensorsAsync(dto, key, ct);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
 }

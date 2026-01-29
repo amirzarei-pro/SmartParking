@@ -158,7 +158,7 @@ body{
 
 .topbar{
   padding: 14px 16px;
-  display:grid;
+  display:inline-flex;
   grid-template-columns: 1fr minmax(320px, 560px) 1fr;
   align-items:center;
   gap: 14px;

@@ -1,42 +1,71 @@
 @page "/live"
 @rendermode InteractiveServer
+@using SmartParking.Application.Services
+@using SmartParking.Application.Contracts
+@using Microsoft.AspNetCore.SignalR.Client
+@inject ISlotService SlotService
+@inject NavigationManager NavigationManager
+@implements IAsyncDisposable
 
 <PageTitle>Live Parking - Smart Parking</PageTitle>
-
 
 <div class="grid-2">
     <div class="panel glass">
         <div class="panel__head">
             <h2 class="panel__title">Live Parking Map</h2>
-            <div class="panel__actions">
-                <button class="btn btn--ghost" id="btnLegend">Legend</button>
-                <button class="btn btn--primary" id="btnReassign">Reassign Device</button>
-            </div>
+            <div class="pill pill--@hubStatusClass"><span class="dot dot--@hubStatusDot"></span> @hubStatus</div>
         </div>
 
         <div class="map">
             <div class="map__header">
                 <div class="pill pill--info"><span class="dot dot--pulse"></span> Real-time</div>
-                <div class="map__meta">Pilot: NODE-001 • Sensors: 2</div>
+                <div class="map__meta">
+                    @if (selectedSlot is not null)
+                    {
+                        <span>@selectedSlot.DeviceCode • Sensors: @slots.Count(s => s.DeviceCode == selectedSlot.DeviceCode)</span>
+                    }
+                    else
+                    {
+                        <span>Total Slots: @slots.Count</span>
+                    }
+                </div>
             </div>
 
             <div class="slot-map" id="slotMap">
-                <div class="slot-tile free" data-id="1cef1c73-938d-45d7-8b58-c7086b116b22"
-                    style="outline: rgba(79, 195, 255, 0.55) solid 2px;">
-                    <div class="slot-tile__id">A1</div>
-                    <div class="slot-tile__sub">NODE-001/S1</div>
-                    <div class="slot-tile__sub">32 cm • Jan 27, 20:38</div>
-                </div>
-                <div class="slot-tile occupied" data-id="31a852d4-f96e-4d2a-942d-cbc54b666bb9" style="outline: none;">
-                    <div class="slot-tile__id">A2</div>
-                    <div class="slot-tile__sub">NODE-001/S2</div>
-                    <div class="slot-tile__sub">12 cm • Jan 27, 20:38</div>
-                </div>
+                @if (slots.Count == 0)
+                {
+                    <div class="hint">Loading slots...</div>
+                }
+                else
+                {
+                    @foreach (var slot in slots)
+                    {
+                        var statusClass = slot.Status.ToLower();
+                        var isSelected = selectedSlot?.Label == slot.Label;
+                        var outlineStyle = isSelected ? "outline: rgba(79, 195, 255, 0.55) solid 2px;" : "outline: none;";
+
+                        <div class="slot-tile @statusClass" 
+                             data-id="@slot.Label"
+                             style="@outlineStyle; cursor: pointer;"
+                             @onclick="() => SelectSlot(slot)">
+                            <div class="slot-tile__id">@slot.Label</div>
+                            <div class="slot-tile__sub">@(slot.DeviceCode)/@(slot.SensorCode)</div>
+                            <div class="slot-tile__sub">@slot.LastDistanceCm cm • @slot.LastUpdateAt.ToString("MMM dd, HH:mm")</div>
+                        </div>
+                    }
+                }
             </div>
 
             <div class="map__footer">
                 <div class="hint">
-                    Click a slot to view details. Ready for SignalR push.
+                    @if (!string.IsNullOrEmpty(lastUpdate))
+                    {
+                        <span>Last update: @lastUpdate</span>
+                    }
+                    else
+                    {
+                        <span>Waiting for updates...</span>
+                    }
                 </div>
             </div>
         </div>
@@ -45,51 +74,186 @@
     <div class="panel glass">
         <div class="panel__head">
             <h2 class="panel__title">Slot Details</h2>
-            <div class="pill pill--info" id="slotDetailPill">A1 • FREE</div>
+            @if (selectedSlot is not null)
+            {
+                <div class="pill pill--info" id="slotDetailPill">@selectedSlot.Label • @selectedSlot.Status.ToUpper()</div>
+            }
+            else
+            {
+                <div class="pill pill--info" id="slotDetailPill">Select a slot</div>
+            }
         </div>
 
         <div class="details" id="slotDetails">
-            <div class="details__box">
-                <div class="details__row">
-                    <div class="details__k">Slot</div>
-                    <div class="details__v">A1</div>
+            @if (selectedSlot is not null)
+            {
+                <div class="details__box">
+                    <div class="details__row">
+                        <div class="details__k">Slot</div>
+                        <div class="details__v">@selectedSlot.Label</div>
+                    </div>
+                    <div class="details__row">
+                        <div class="details__k">Zone</div>
+                        <div class="details__v">@selectedSlot.Zone</div>
+                    </div>
+                    <div class="details__row">
+                        <div class="details__k">Device</div>
+                        <div class="details__v">@selectedSlot.DeviceCode</div>
+                    </div>
+                    <div class="details__row">
+                        <div class="details__k">Sensor Channel</div>
+                        <div class="details__v">@selectedSlot.SensorCode</div>
+                    </div>
+                    <div class="details__row">
+                        <div class="details__k">Status</div>
+                        <div class="details__v"><span class="badge badge--@selectedSlot.Status.ToLower()">@selectedSlot.Status.ToUpper()</span></div>
+                    </div>
+                    <div class="details__row">
+                        <div class="details__k">Distance</div>
+                        <div class="details__v">@selectedSlot.LastDistanceCm cm</div>
+                    </div>
+                    <div class="details__row">
+                        <div class="details__k">Threshold</div>
+                        <div class="details__v">@selectedSlot.OccupiedThresholdCm cm</div>
+                    </div>
+                    <div class="details__row">
+                        <div class="details__k">Last Update</div>
+                        <div class="details__v">@selectedSlot.LastUpdateAt.ToString("MMM dd, HH:mm")</div>
+                    </div>
                 </div>
-                <div class="details__row">
-                    <div class="details__k">Device</div>
-                    <div class="details__v">NODE-001</div>
+            }
+            else
+            {
+                <div class="details__box">
+                    <p style="text-align: center; color: #999;">Select a slot to view details</p>
                 </div>
-                <div class="details__row">
-                    <div class="details__k">Sensor Channel</div>
-                    <div class="details__v">S1</div>
-                </div>
-                <div class="details__row">
-                    <div class="details__k">Status</div>
-                    <div class="details__v"><span class="badge badge--free">FREE</span></div>
-                </div>
-                <div class="details__row">
-                    <div class="details__k">Distance</div>
-                    <div class="details__v">32 cm</div>
-                </div>
-                <div class="details__row">
-                    <div class="details__k">Last Update</div>
-                    <div class="details__v">Jan 27, 20:38</div>
-                </div>
-                <div class="divider"></div>
-                <div class="details__row">
-                    <button class="btn btn--primary" id="btnSimOne">Simulate Telemetry</button>
-                    <button class="btn btn--ghost" id="btnToggleOffline">Toggle Offline</button>
-                </div>
-            </div>
+            }
         </div>
 
         <div class="divider"></div>
 
         <div class="actions">
-            <button class="btn btn--primary" id="btnForceRefresh">Force Refresh</button>
-            <button class="btn btn--ghost" id="btnMarkOffline">Mark Offline</button>
+            <button class="btn btn--primary" id="btnForceRefresh" @onclick="RefreshSlots">Force Refresh</button>
         </div>
     </div>
 </div>
 
 @code {
+    private List<SlotDto> slots = new();
+    private SlotDto? selectedSlot;
+    
+    // SignalR state
+    private HubConnection? hubConnection;
+    private string hubStatus = "Disconnected";
+    private string hubStatusClass = "offline";
+    private string hubStatusDot = "offline";
+    private string lastUpdate = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshSlots();
+        await InitializeSignalR();
+    }
+
+    private async Task InitializeSignalR()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/hubs/parking"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        hubConnection.Reconnecting += _ =>
+        {
+            hubStatus = "Reconnecting...";
+            hubStatusClass = "warn";
+            hubStatusDot = "offline";
+            return InvokeAsync(StateHasChanged);
+        };
+
+        hubConnection.Reconnected += _ =>
+        {
+            hubStatus = "Connected";
+            hubStatusClass = "ok";
+            hubStatusDot = "online";
+            return InvokeAsync(StateHasChanged);
+        };
+
+        hubConnection.Closed += _ =>
+        {
+            hubStatus = "Disconnected";
+            hubStatusClass = "offline";
+            hubStatusDot = "offline";
+            return InvokeAsync(StateHasChanged);
+        };
+
+        hubConnection.On<TelemetryIngestResultDto>("slotUpdated", msg =>
+        {
+            if (msg.SlotLabel is null) return Task.CompletedTask;
+
+            lastUpdate = $"{msg.SlotLabel} → {msg.Status} @ {DateTime.Now:HH:mm:ss}";
+
+            var slot = slots.FirstOrDefault(x => x.Label == msg.SlotLabel);
+            if (slot is null) return Task.CompletedTask;
+
+            var idx = slots.IndexOf(slot);
+            slots[idx] = slot with
+            {
+                Status = msg.Status ?? slot.Status,
+                LastDistanceCm = msg.DistanceCm ?? slot.LastDistanceCm,
+                LastUpdateAt = msg.UpdatedAt ?? slot.LastUpdateAt
+            };
+
+            // Update selected slot if it's the one that changed
+            if (selectedSlot?.Label == msg.SlotLabel)
+            {
+                selectedSlot = slots[idx];
+            }
+
+            return InvokeAsync(StateHasChanged);
+        });
+
+        try
+        {
+            await hubConnection.StartAsync();
+            hubStatus = "Connected";
+            hubStatusClass = "ok";
+            hubStatusDot = "online";
+        }
+        catch (Exception ex)
+        {
+            hubStatus = "Error";
+            hubStatusClass = "offline";
+            hubStatusDot = "offline";
+            Console.WriteLine($"SignalR connection error: {ex.Message}");
+        }
+    }
+
+    private async Task RefreshSlots()
+    {
+        try
+        {
+            slots = await SlotService.GetAllAsync(CancellationToken.None);
+            if (slots.Count > 0 && selectedSlot is null)
+            {
+                selectedSlot = slots[0];
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading slots: {ex.Message}");
+        }
+    }
+
+    private void SelectSlot(SlotDto slot)
+    {
+        selectedSlot = slot;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
 }

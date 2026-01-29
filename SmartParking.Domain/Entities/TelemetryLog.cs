@@ -14,6 +14,6 @@ public class TelemetryLog
     public double DistanceCm { get; set; }
     public SlotStatus StatusAfter { get; set; }
 
-    public DateTimeOffset ReceivedAtUtc { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset ReceivedAtUtc { get; set; } = DateTimeOffset.Now;
     public DateTimeOffset? DeviceTs { get; set; } // optional: if device sends timestamp
 }

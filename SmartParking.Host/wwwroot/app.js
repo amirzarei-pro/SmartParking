@@ -748,28 +748,41 @@ function wireEvents() {
     $("#btnSimLive").addEventListener("click", startSimulation);
     $("#btnClearSim").addEventListener("click", stopSimulation);
 
-    // theme toggle hook
-    $("#btnTheme").addEventListener("click", () => {
-        document.body.classList.toggle("theme-alt");
-        toast("Theme", "Theme toggled (demo).", "ok");
+    // theme toggle hook (using event delegation for Blazor compatibility)
+    document.addEventListener("click", (e) => {
+        const btn = e.target.closest("#btnTheme");
+        if (btn) {
+            document.body.classList.toggle("theme-alt");
+            toast("Theme", "Theme toggled (demo).", "ok");
+        }
     });
 
-    // sidebar (desktop collapse + mobile off-canvas)
-    $("#btnMobileMenu").addEventListener("click", () => {
-        if (!isNarrow()) return;
-        const sb = $("#sidebar");
-        if (!sb) return;
+    // sidebar (desktop collapse + mobile off-canvas) - using event delegation for Blazor compatibility
+    document.addEventListener("click", (e) => {
+        // Mobile menu button
+        if (e.target.closest("#btnMobileMenu")) {
+            if (!isNarrow()) return;
+            const sb = $("#sidebar");
+            if (!sb) return;
 
-        if (!sb.classList.contains("is-open")) openSidebarMobile();
-        else closeSidebarMobile();
+            if (!sb.classList.contains("is-open")) openSidebarMobile();
+            else closeSidebarMobile();
+            return;
+        }
+
+        // Desktop collapse button
+        if (e.target.closest("#btnCollapse")) {
+            if (isNarrow()) return;
+            toggleSidebarCollapsed();
+            return;
+        }
+
+        // Sidebar overlay click
+        if (e.target.closest("#sidebarOverlay")) {
+            closeSidebarMobile();
+            return;
+        }
     });
-
-    $("#btnCollapse").addEventListener("click", () => {
-        if (isNarrow()) return;
-        toggleSidebarCollapsed();
-    });
-
-    $("#sidebarOverlay").addEventListener("click", closeSidebarMobile);
 
     window.addEventListener("resize", () => {
         if (isNarrow()) closeSidebarMobile();

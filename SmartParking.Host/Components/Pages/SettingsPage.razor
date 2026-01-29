@@ -4,80 +4,81 @@
 <PageTitle>Settings - Smart Parking</PageTitle>
 
 <div class="grid-2">
-            <div class="panel glass">
-              <div class="panel__head">
-                <h2 class="panel__title">System Settings</h2>
-                <div class="panel__sub">These map directly to your ASP.NET config</div>
-              </div>
+  <div class="panel glass">
+    <div class="panel__head">
+      <h2 class="panel__title">System Settings</h2>
+      <div class="panel__sub">These map directly to your ASP.NET config</div>
+    </div>
 
-              <div class="form">
-                <label class="field">
-                  <span>Occupancy Threshold (cm)</span>
-                  <input class="input" id="threshold" type="number" value="15" min="1" max="80">
-                </label>
+    <div class="form">
+      <label class="field">
+        <span>Occupancy Threshold (cm)</span>
+        <input class="input" id="threshold" type="number" value="15" min="1" max="80">
+      </label>
 
-                <label class="field">
-                  <span>Telemetry Interval (sec)</span>
-                  <input class="input" id="interval" type="number" value="5" min="1" max="60">
-                </label>
+      <label class="field">
+        <span>Telemetry Interval (sec)</span>
+        <input class="input" id="interval" type="number" value="5" min="1" max="60">
+      </label>
 
-                <label class="field">
-                  <span>Offline Timeout (sec)</span>
-                  <input class="input" id="offlineTimeout" type="number" value="20" min="5" max="300">
-                </label>
+      <label class="field">
+        <span>Offline Timeout (sec)</span>
+        <input class="input" id="offlineTimeout" type="number" value="20" min="5" max="300">
+      </label>
 
-                <div class="field-row">
-                  <label class="toggle">
-                    <input type="checkbox" id="enableSignalR" checked="">
-                    <span class="toggle__ui"></span>
-                    <span>Enable SignalR</span>
-                  </label>
+      <div class="field-row">
+        <label class="toggle">
+          <input type="checkbox" id="enableSignalR" checked="">
+          <span class="toggle__ui"></span>
+          <span>Enable SignalR</span>
+        </label>
 
-                  <label class="toggle">
-                    <input type="checkbox" id="enableAudit" checked="">
-                    <span class="toggle__ui"></span>
-                    <span>Audit Logs</span>
-                  </label>
-                </div>
+        <label class="toggle">
+          <input type="checkbox" id="enableAudit" checked="">
+          <span class="toggle__ui"></span>
+          <span>Audit Logs</span>
+        </label>
+      </div>
 
-                <div class="actions">
-                  <button class="btn btn--primary" id="btnSaveSettings">Save</button>
-                  <button class="btn btn--ghost" id="btnResetSettings">Reset</button>
-                </div>
-              </div>
-            </div>
+      <div class="actions">
+        <button class="btn btn--primary" id="btnSaveSettings">Save</button>
+        <button class="btn btn--ghost" id="btnResetSettings">Reset</button>
+      </div>
+    </div>
+  </div>
 
-            <div class="panel glass">
-              <div class="panel__head">
-                <h2 class="panel__title">API Endpoints</h2>
-                <div class="panel__sub">Placeholders for your .NET API</div>
-              </div>
+  <div class="panel glass">
+    <div class="panel__head">
+      <h2 class="panel__title">API Endpoints</h2>
+      <div class="panel__sub">Placeholders for your .NET API</div>
+    </div>
 
-              <div class="kv">
-                <div class="kv__row">
-                  <div class="kv__k">POST Telemetry</div>
-                  <div class="kv__v">/api/iot/parking/update</div>
-                </div>
-                <div class="kv__row">
-                  <div class="kv__k">GET Slots</div>
-                  <div class="kv__v">/api/admin/slots</div>
-                </div>
-                <div class="kv__row">
-                  <div class="kv__k">GET Devices</div>
-                  <div class="kv__v">/api/admin/devices</div>
-                </div>
-                <div class="kv__row">
-                  <div class="kv__k">SignalR Hub</div>
-                  <div class="kv__v">/hubs/parking</div>
-                </div>
-              </div>
+    <div class="kv">
+      <div class="kv__row">
+        <div class="kv__k">POST Telemetry</div>
+        <div class="kv__v">/api/iot/parking/update</div>
+      </div>
+      <div class="kv__row">
+        <div class="kv__k">GET Slots</div>
+        <div class="kv__v">/api/admin/slots</div>
+      </div>
+      <div class="kv__row">
+        <div class="kv__k">GET Devices</div>
+        <div class="kv__v">/api/admin/devices</div>
+      </div>
+      <div class="kv__row">
+        <div class="kv__k">SignalR Hub</div>
+        <div class="kv__v">/hubs/parking</div>
+      </div>
+    </div>
 
-              <div class="divider"></div>
+    <div class="divider"></div>
 
-              <div class="note">
-                This UI is structured to be dropped into Blazor (Layout + Pages) with minimal changes.
-              </div>
-            </div>
-          </div>
+    <div class="note">
+      This UI is structured to be dropped into Blazor (Layout + Pages) with minimal changes.
+    </div>
+  </div>
+</div>
 
-@code {}
+@code {
+}

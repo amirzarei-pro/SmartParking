@@ -1,69 +1,324 @@
 @page "/logs"
 @rendermode InteractiveServer
+@using SmartParking.Application.Services
+@using SmartParking.Application.Contracts
+@using Microsoft.AspNetCore.SignalR.Client
+@inject ITelemetryLogService TelemetryLogService
+@inject ISlotService SlotService
+@inject IDeviceService DeviceService
+@inject NavigationManager NavigationManager
+@implements IAsyncDisposable
 
 <PageTitle>Logs - Smart Parking</PageTitle>
 
 <div class="grid-2">
     <div class="panel glass">
         <div class="panel__head">
-            <h2 class="panel__title">Event Logs</h2>
+            <h2 class="panel__title">Telemetry History</h2>
             <div class="panel__actions">
-                <select class="select" id="logLevel">
-                    <option value="all">All Levels</option>
-                    <option value="info">Info</option>
-                    <option value="warn">Warn</option>
-                    <option value="error">Error</option>
+                <select class="select" @bind="selectedSlotFilter" @bind:after="ApplyFilters">
+                    <option value="">All Slots</option>
+                    @foreach (var slot in availableSlots)
+                    {
+                        <option value="@slot">@slot</option>
+                    }
                 </select>
-                <button class="btn btn--ghost" id="btnExport">Export</button>
+                <select class="select" @bind="selectedDeviceFilter" @bind:after="ApplyFilters">
+                    <option value="">All Devices</option>
+                    @foreach (var device in availableDevices)
+                    {
+                        <option value="@device">@device</option>
+                    }
+                </select>
+                <select class="select" @bind="selectedStatusFilter" @bind:after="ApplyFilterLocal">
+                    <option value="">All Status</option>
+                    <option value="Free">Free</option>
+                    <option value="Occupied">Occupied</option>
+                </select>
             </div>
         </div>
 
         <div class="loglist" id="logList">
-            <div class="log">
-                <div>
-                    <div class="log__msg">Slot A2 mapped to NODE-001/S2</div>
-                    <div class="log__meta">Config • Jan 27, 20:38</div>
+            @if (isLoading)
+            {
+                <div class="log" style="justify-content: center; color: #999;">
+                    Loading logs...
                 </div>
-                <div class="level info">INFO</div>
-            </div>
-            <div class="log">
-                <div>
-                    <div class="log__msg">Slot A1 mapped to NODE-001/S1</div>
-                    <div class="log__meta">Config • Jan 27, 20:38</div>
+            }
+            else if (filteredLogs.Count == 0)
+            {
+                <div class="log" style="justify-content: center; color: #999;">
+                    No telemetry logs found.
                 </div>
-                <div class="level info">INFO</div>
-            </div>
-            <div class="log">
-                <div>
-                    <div class="log__msg">Pilot initialized: NODE-001 with 2 sensors</div>
-                    <div class="log__meta">System • Jan 27, 20:38</div>
-                </div>
-                <div class="level info">INFO</div>
-            </div>
+            }
+            else
+            {
+                @foreach (var log in filteredLogs)
+                {
+                    var levelClass = log.StatusAfter.ToLower() == "occupied" ? "warn" : "info";
+                    var levelText = log.StatusAfter.ToUpper();
+
+                    <div class="log">
+                        <div>
+                            <div class="log__msg">
+                                @(log.SlotLabel ?? "Unknown") → @log.StatusAfter 
+                                <span style="color: #888;">(@log.DistanceCm cm)</span>
+                            </div>
+                            <div class="log__meta">@log.DeviceCode/@log.SensorCode • @log.ReceivedAtUtc.ToLocalTime().ToString("MMM dd, HH:mm:ss")</div>
+                        </div>
+                        <div class="level @levelClass">@levelText</div>
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="actions" style="padding: 1rem;">
+            <button class="btn btn--ghost" @onclick="LoadMoreLogs" disabled="@isLoading">
+                Load More (@logCount shown)
+            </button>
         </div>
     </div>
 
     <div class="panel glass">
         <div class="panel__head">
             <h2 class="panel__title">Live Stream</h2>
-            <div class="pill pill--info"><span class="dot dot--pulse"></span> Listening</div>
+            <div class="pill pill--@hubStatusClass"><span class="dot dot--@hubStatusDot"></span> @hubStatus</div>
         </div>
 
         <div class="terminal" id="terminal">
-            <div class="line"><span class="t">[INFO]</span> Jan 27, 20:38 — Pilot initialized: NODE-001 with 2 sensors
-            </div>
-            <div class="line"><span class="t">[INFO]</span> Jan 27, 20:38 — Slot A1 mapped to NODE-001/S1</div>
-            <div class="line"><span class="t">[INFO]</span> Jan 27, 20:38 — Slot A2 mapped to NODE-001/S2</div>
+            @if (liveEvents.Count == 0)
+            {
+                <div class="line" style="color: #666;">Waiting for telemetry events...</div>
+            }
+            else
+            {
+                @foreach (var evt in liveEvents)
+                {
+                    var tagClass = evt.StatusAfter.ToLower() == "occupied" ? "w" : "i";
+                    <div class="line">
+                        <span class="t @tagClass">[@evt.StatusAfter.ToUpper()]</span> 
+                        @evt.ReceivedAtUtc.ToLocalTime().ToString("HH:mm:ss") — 
+                        @(evt.SlotLabel ?? "?") • @evt.DistanceCm cm
+                    </div>
+                }
+            }
         </div>
 
         <div class="divider"></div>
 
         <div class="actions">
-            <button class="btn btn--primary" id="btnInject">Inject Test Event</button>
-            <button class="btn btn--ghost" id="btnClearLogs">Clear</button>
+            <button class="btn btn--primary" @onclick="RefreshLogs">Refresh</button>
+            <button class="btn btn--ghost" @onclick="ClearLiveStream">Clear Stream</button>
         </div>
     </div>
 </div>
 
+<style>
+    .loglist {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    
+    .terminal {
+        max-height: 400px;
+        overflow-y: auto;
+        font-family: 'Fira Code', 'Consolas', monospace;
+        font-size: 0.85rem;
+    }
+    
+    .line .t.w {
+        color: #f39c12;
+    }
+    
+    .line .t.i {
+        color: #2ecc71;
+    }
+    
+    .level.warn {
+        background: rgba(243, 156, 18, 0.2);
+        color: #f39c12;
+    }
+    
+    .level.info {
+        background: rgba(46, 204, 113, 0.2);
+        color: #2ecc71;
+    }
+</style>
+
 @code {
+    private List<TelemetryLogDto> logs = new();
+    private List<TelemetryLogDto> filteredLogs = new();
+    private List<TelemetryLogDto> liveEvents = new();
+    private List<string> availableSlots = new();
+    private List<string> availableDevices = new();
+    
+    private string selectedSlotFilter = "";
+    private string selectedDeviceFilter = "";
+    private string selectedStatusFilter = "";
+    private int logCount = 50;
+    private bool isLoading = true;
+
+    // SignalR state
+    private HubConnection? hubConnection;
+    private string hubStatus = "Disconnected";
+    private string hubStatusClass = "offline";
+    private string hubStatusDot = "offline";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFilters();
+        await LoadLogs();
+        await InitializeSignalR();
+    }
+
+    private async Task LoadFilters()
+    {
+        try
+        {
+            var slots = await SlotService.GetAllAsync(CancellationToken.None);
+            availableSlots = slots.Select(s => s.Label).Distinct().OrderBy(x => x).ToList();
+            
+            var devices = await DeviceService.GetAllAsync(CancellationToken.None);
+            availableDevices = devices.Select(d => d.Code).Distinct().OrderBy(x => x).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading filters: {ex.Message}");
+        }
+    }
+
+    private async Task LoadLogs()
+    {
+        isLoading = true;
+        try
+        {
+            var slotFilter = string.IsNullOrWhiteSpace(selectedSlotFilter) ? null : selectedSlotFilter;
+            var deviceFilter = string.IsNullOrWhiteSpace(selectedDeviceFilter) ? null : selectedDeviceFilter;
+            
+            logs = await TelemetryLogService.GetRecentAsync(logCount, slotFilter, deviceFilter, CancellationToken.None);
+            ApplyFilterLocal();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading logs: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ApplyFilters()
+    {
+        await LoadLogs();
+    }
+
+    private void ApplyFilterLocal()
+    {
+        if (string.IsNullOrWhiteSpace(selectedStatusFilter))
+        {
+            filteredLogs = logs;
+        }
+        else
+        {
+            filteredLogs = logs
+                .Where(l => l.StatusAfter.Equals(selectedStatusFilter, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+
+    private async Task LoadMoreLogs()
+    {
+        logCount += 50;
+        await LoadLogs();
+    }
+
+    private async Task RefreshLogs()
+    {
+        logCount = 50;
+        await LoadLogs();
+    }
+
+    private void ClearLiveStream()
+    {
+        liveEvents.Clear();
+    }
+
+    private async Task InitializeSignalR()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/hubs/parking"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        hubConnection.Reconnecting += _ =>
+        {
+            hubStatus = "Reconnecting...";
+            hubStatusClass = "warn";
+            hubStatusDot = "offline";
+            return InvokeAsync(StateHasChanged);
+        };
+
+        hubConnection.Reconnected += _ =>
+        {
+            hubStatus = "Connected";
+            hubStatusClass = "ok";
+            hubStatusDot = "online";
+            return InvokeAsync(StateHasChanged);
+        };
+
+        hubConnection.Closed += _ =>
+        {
+            hubStatus = "Disconnected";
+            hubStatusClass = "offline";
+            hubStatusDot = "offline";
+            return InvokeAsync(StateHasChanged);
+        };
+
+        hubConnection.On<TelemetryIngestResultDto>("slotUpdated", msg =>
+        {
+            var liveLog = new TelemetryLogDto(
+                "-",
+                "-",
+                msg.SlotLabel,
+                msg.DistanceCm ?? 0,
+                msg.Status ?? "Unknown",
+                msg.UpdatedAt ?? DateTimeOffset.Now,
+                null
+            );
+
+            liveEvents.Insert(0, liveLog);
+            
+            // Keep only last 100 live events
+            if (liveEvents.Count > 100)
+            {
+                liveEvents.RemoveAt(liveEvents.Count - 1);
+            }
+
+            return InvokeAsync(StateHasChanged);
+        });
+
+        try
+        {
+            await hubConnection.StartAsync();
+            hubStatus = "Connected";
+            hubStatusClass = "ok";
+            hubStatusDot = "online";
+        }
+        catch (Exception ex)
+        {
+            hubStatus = "Error";
+            hubStatusClass = "offline";
+            hubStatusDot = "offline";
+            Console.WriteLine($"SignalR connection error: {ex.Message}");
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
 }

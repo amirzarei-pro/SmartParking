@@ -44,7 +44,7 @@ public sealed class SlotService : ISlotService
             return false;
 
         slot.OccupiedThresholdCm = thresholdCm;
-        slot.LastUpdateAt = DateTimeOffset.UtcNow;
+        slot.LastUpdateAt = DateTimeOffset.Now;
 
         await _db.SaveChangesAsync(ct);
         return true;
