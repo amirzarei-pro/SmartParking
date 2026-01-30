@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using SmartParking.Application.Services;
 using SmartParking.Host.Components;
@@ -14,6 +15,17 @@ builder.Services.AddRazorComponents()
 builder.Services.AddSignalR();
 builder.Services.AddControllers();
 
+// Cookie Authentication
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/login";
+        options.LogoutPath = "/api/auth/logout";
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    });
+builder.Services.AddAuthorization();
+builder.Services.AddCascadingAuthenticationState();
+
 
 builder.Services.AddDbContext<SmartParkingDbContext>(opt =>
 {
@@ -29,6 +41,8 @@ builder.Services.AddScoped<ITelemetryLogService, TelemetryLogService>();
 builder.Services.Configure<OfflineOptions>(builder.Configuration.GetSection("Offline"));
 builder.Services.AddHostedService<OfflineMonitor>();
 
+builder.Services.AddScoped<AuthService>();
+
 
 var app = builder.Build();
 
@@ -41,6 +55,9 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseAntiforgery();
 
