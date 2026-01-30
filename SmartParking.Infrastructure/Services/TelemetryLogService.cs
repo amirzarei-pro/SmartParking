@@ -99,12 +99,14 @@ public sealed class TelemetryLogService : ITelemetryLogService
         return result;
     }
 
-    public async Task<List<SlotHourlyOccupancyDto>> GetSlotHourlyOccupancyAsync(CancellationToken ct)
+    public async Task<List<SlotHourlyOccupancyDto>> GetSlotHourlyOccupancyAsync(DateOnly? date, CancellationToken ct)
     {
-        // Get start of current day (local)
-        var today = DateTimeOffset.Now.Date;
-        var startOfDay = new DateTimeOffset(today, DateTimeOffset.Now.Offset);
+        // Get start of the specified day (or today if null)
+        var targetDate = date?.ToDateTime(TimeOnly.MinValue) ?? DateTimeOffset.Now.Date;
+        var startOfDay = new DateTimeOffset(targetDate, DateTimeOffset.Now.Offset);
+        var endOfDay = startOfDay.AddDays(1);
         var now = DateTimeOffset.Now;
+        var isToday = targetDate == DateTimeOffset.Now.Date;
 
         // Get all slots first to ensure we have data for all slots
         var allSlots = await _db.Slots
@@ -112,10 +114,10 @@ public sealed class TelemetryLogService : ITelemetryLogService
             .Select(s => s.Label)
             .ToListAsync(ct);
 
-        // Get all telemetry logs for today
+        // Get all telemetry logs for the target date
         var logs = await _db.TelemetryLogs
             .AsNoTracking()
-            .Where(x => x.ReceivedAtUtc >= startOfDay && x.SlotLabel != null)
+            .Where(x => x.ReceivedAtUtc >= startOfDay && x.ReceivedAtUtc < endOfDay && x.SlotLabel != null)
             .OrderBy(x => x.SlotLabel)
             .ThenBy(x => x.ReceivedAtUtc)
             .ToListAsync(ct);
@@ -157,10 +159,12 @@ public sealed class TelemetryLogService : ITelemetryLogService
                 }
             }
 
-            // Handle ongoing occupation (still occupied now)
+            // Handle ongoing occupation (still occupied at end of period)
             if (occupiedStart != null)
             {
-                DistributeMinutesAcrossHours(hourlyMinutes, occupiedStart.Value, now, startOfDay);
+                // For today, use current time; for past dates, use end of day
+                var endTime = isToday ? now : endOfDay;
+                DistributeMinutesAcrossHours(hourlyMinutes, occupiedStart.Value, endTime, startOfDay);
             }
 
             result.Add(new SlotHourlyOccupancyDto(slotLabel, hourlyMinutes));

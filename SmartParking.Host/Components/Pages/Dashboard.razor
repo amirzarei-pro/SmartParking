@@ -21,8 +21,20 @@ else
 {
     <div class="panel glass" style="margin-bottom: 1.5rem;">
         <div class="panel__head">
-            <h2 class="panel__title">Slot Occupancy Time (Today)</h2>
-            <div class="pill pill--info"><span class="dot dot--pulse"></span> Live</div>
+            <h2 class="panel__title">Slot Occupancy Time (@_selectedDate.ToString("MMM dd, yyyy"))</h2>
+            <div class="panel__actions" style="display: flex; align-items: center; gap: 1rem;">
+                <input type="date" class="date-input" value="@_selectedDate.ToString("yyyy-MM-dd")" 
+                       max="@DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")"
+                       @onchange="OnDateChangedAsync" />
+                @if (_selectedDate == DateOnly.FromDateTime(DateTime.Today))
+                {
+                    <div class="pill pill--info"><span class="dot dot--pulse"></span> Live</div>
+                }
+                else
+                {
+                    <div class="pill pill--muted">Historical</div>
+                }
+            </div>
         </div>
         <div class="chart-wrap" style="height: 320px;">
             <canvas id="chartLine"></canvas>
@@ -214,6 +226,7 @@ else
     private List<SlotHourlyOccupancyDto> _slotHourlyOccupancy = new();
     private string _filter = "all";
     private IJSObjectReference? _chartModule;
+    private DateOnly _selectedDate = DateOnly.FromDateTime(DateTime.Today);
 
     // Computed metrics
     private int _totalSlots => _slots.Count;
@@ -258,7 +271,7 @@ else
             _slots = await SlotService.GetAllAsync(CancellationToken.None);
             _devices = await DeviceService.GetAllAsync(CancellationToken.None);
             _recentLogs = await TelemetryLogService.GetRecentAsync(5, null, null, CancellationToken.None);
-            _slotHourlyOccupancy = await TelemetryLogService.GetSlotHourlyOccupancyAsync(CancellationToken.None);
+            _slotHourlyOccupancy = await TelemetryLogService.GetSlotHourlyOccupancyAsync(_selectedDate, CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -311,6 +324,17 @@ else
     private void SetFilter(string filter)
     {
         _filter = filter;
+    }
+
+    private async Task OnDateChangedAsync(ChangeEventArgs e)
+    {
+        if (DateOnly.TryParse(e.Value?.ToString(), out var newDate))
+        {
+            _selectedDate = newDate;
+            _chartsInitialized = false;
+            _slotHourlyOccupancy = await TelemetryLogService.GetSlotHourlyOccupancyAsync(_selectedDate, CancellationToken.None);
+            StateHasChanged();
+        }
     }
 
     private static string GetBadgeClass(string status) => status.ToLowerInvariant() switch

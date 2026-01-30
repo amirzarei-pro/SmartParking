@@ -12,8 +12,10 @@ public interface ITelemetryLogService
     Task<List<SlotOccupancyStatsDto>> GetSlotOccupancyStatsAsync(int hoursBack, CancellationToken ct);
     
     /// <summary>
-    /// Gets hourly occupancy data for all slots for the current day (24 hours).
+    /// Gets hourly occupancy data for all slots for the specified day (24 hours).
     /// Returns minutes occupied per hour for each slot.
     /// </summary>
-    Task<List<SlotHourlyOccupancyDto>> GetSlotHourlyOccupancyAsync(CancellationToken ct);
+    /// <param name="date">The date to get occupancy for. If null, uses today.</param>
+    /// <param name="ct">Cancellation token.</param>
+    Task<List<SlotHourlyOccupancyDto>> GetSlotHourlyOccupancyAsync(DateOnly? date, CancellationToken ct);
 }

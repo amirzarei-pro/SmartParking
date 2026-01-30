@@ -19,14 +19,24 @@
         <div class="map">
             <div class="map__header">
                 <div class="pill pill--info"><span class="dot dot--pulse"></span> Real-time</div>
+                <div class="filter-zone">
+                    <label for="zoneFilter">Zone:</label>
+                    <select id="zoneFilter" @bind="selectedZone" @bind:after="OnZoneFilterChanged">
+                        <option value="">All Zones</option>
+                        @foreach (var zone in availableZones)
+                        {
+                            <option value="@zone">@zone</option>
+                        }
+                    </select>
+                </div>
                 <div class="map__meta">
                     @if (selectedSlot is not null)
                     {
-                        <span>@selectedSlot.DeviceCode • Sensors: @slots.Count(s => s.DeviceCode == selectedSlot.DeviceCode)</span>
+                        <span>@selectedSlot.DeviceCode • Sensors: @filteredSlots.Count(s => s.DeviceCode == selectedSlot.DeviceCode)</span>
                     }
                     else
                     {
-                        <span>Total Slots: @slots.Count</span>
+                        <span>Showing: @filteredSlots.Count / @slots.Count slots</span>
                     }
                 </div>
             </div>
@@ -38,18 +48,28 @@
                 }
                 else
                 {
-                    @foreach (var slot in slots)
+                    @foreach (var slot in filteredSlots)
                     {
                         var statusClass = slot.Status.ToLower();
                         var isSelected = selectedSlot?.Label == slot.Label;
                         var outlineStyle = isSelected ? "outline: rgba(79, 195, 255, 0.55) solid 2px;" : "outline: none;";
+                        var canDelete = slot.SensorCode is null;
 
                         <div class="slot-tile @statusClass" 
                              data-id="@slot.Label"
-                             style="@outlineStyle; cursor: pointer;"
+                             style="@outlineStyle; cursor: pointer; position: relative;"
                              @onclick="() => SelectSlot(slot)">
+                            @if (canDelete)
+                            {
+                                <button class="btn-delete-slot" 
+                                        title="Delete slot"
+                                        @onclick="() => ConfirmDeleteSlot(slot.Label)"
+                                        @onclick:stopPropagation="true">
+                                    🗑️
+                                </button>
+                            }
                             <div class="slot-tile__id">@slot.Label</div>
-                            <div class="slot-tile__sub">@(slot.DeviceCode)/@(slot.SensorCode)</div>
+                            <div class="slot-tile__sub">@(slot.DeviceCode ?? "—")/@(slot.SensorCode ?? "—")</div>
                             <div class="slot-tile__sub">@slot.LastDistanceCm cm • @slot.LastUpdateAt.ToString("MMM dd, HH:mm")</div>
                         </div>
                     }
@@ -138,6 +158,105 @@
     </div>
 </div>
 
+@if (showDeleteConfirm)
+{
+    <div class="modal-overlay" @onclick="CancelDelete">
+        <div class="modal-dialog" @onclick:stopPropagation="true">
+            <h3>Delete Slot</h3>
+            <p>Are you sure you want to delete slot <strong>@slotToDelete</strong>?</p>
+            <div class="modal-actions">
+                <button class="btn btn--secondary" @onclick="CancelDelete">Cancel</button>
+                <button class="btn btn--danger" @onclick="DeleteSlot">Delete</button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .filter-zone {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .filter-zone label {
+        color: #aaa;
+        font-size: 13px;
+    }
+    .filter-zone select {
+        background: #2a2a3e;
+        color: #fff;
+        border: 1px solid #444;
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 13px;
+        cursor: pointer;
+    }
+    .filter-zone select:focus {
+        outline: none;
+        border-color: #4fc3ff;
+    }
+    .btn-delete-slot {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        background: rgba(255, 100, 100, 0.2);
+        border: none;
+        border-radius: 4px;
+        padding: 2px 6px;
+        cursor: pointer;
+        font-size: 12px;
+        opacity: 0.7;
+        transition: opacity 0.2s, background 0.2s;
+    }
+    .btn-delete-slot:hover {
+        opacity: 1;
+        background: rgba(255, 100, 100, 0.5);
+    }
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    .modal-dialog {
+        background: #1e1e2e;
+        border-radius: 12px;
+        padding: 24px;
+        min-width: 320px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+    .modal-dialog h3 {
+        margin: 0 0 12px 0;
+        color: #fff;
+    }
+    .modal-dialog p {
+        margin: 0 0 20px 0;
+        color: #aaa;
+    }
+    .modal-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+    .btn--secondary {
+        background: #444;
+        color: #fff;
+    }
+    .btn--danger {
+        background: #e74c3c;
+        color: #fff;
+    }
+    .btn--danger:hover {
+        background: #c0392b;
+    }
+</style>
+
 @code {
     private List<SlotDto> slots = new();
     private SlotDto? selectedSlot;
@@ -148,11 +267,31 @@
     private string hubStatusClass = "offline";
     private string hubStatusDot = "offline";
     private string lastUpdate = "";
+    
+    // Delete confirmation state
+    private bool showDeleteConfirm = false;
+    private string? slotToDelete = null;
+    
+    // Zone filter state
+    private string selectedZone = "";
+    private List<string> availableZones = new();
+    private List<SlotDto> filteredSlots => string.IsNullOrEmpty(selectedZone) 
+        ? slots 
+        : slots.Where(s => s.Zone == selectedZone).ToList();
 
     protected override async Task OnInitializedAsync()
     {
         await RefreshSlots();
         await InitializeSignalR();
+    }
+
+    private void OnZoneFilterChanged()
+    {
+        // Clear selection if selected slot is not in filtered list
+        if (selectedSlot is not null && !filteredSlots.Any(s => s.Label == selectedSlot.Label))
+        {
+            selectedSlot = filteredSlots.FirstOrDefault();
+        }
     }
 
     private async Task InitializeSignalR()
@@ -233,9 +372,10 @@
         try
         {
             slots = await SlotService.GetAllAsync(CancellationToken.None);
-            if (slots.Count > 0 && selectedSlot is null)
+            availableZones = slots.Select(s => s.Zone).Distinct().OrderBy(z => z).ToList();
+            if (filteredSlots.Count > 0 && selectedSlot is null)
             {
-                selectedSlot = slots[0];
+                selectedSlot = filteredSlots[0];
             }
         }
         catch (Exception ex)
@@ -247,6 +387,45 @@
     private void SelectSlot(SlotDto slot)
     {
         selectedSlot = slot;
+    }
+
+    private void ConfirmDeleteSlot(string label)
+    {
+        slotToDelete = label;
+        showDeleteConfirm = true;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirm = false;
+        slotToDelete = null;
+    }
+
+    private async Task DeleteSlot()
+    {
+        if (slotToDelete is null) return;
+
+        try
+        {
+            var success = await SlotService.DeleteAsync(slotToDelete, CancellationToken.None);
+            if (success)
+            {
+                slots.RemoveAll(s => s.Label == slotToDelete);
+                if (selectedSlot?.Label == slotToDelete)
+                {
+                    selectedSlot = slots.FirstOrDefault();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting slot: {ex.Message}");
+        }
+        finally
+        {
+            showDeleteConfirm = false;
+            slotToDelete = null;
+        }
     }
 
     public async ValueTask DisposeAsync()

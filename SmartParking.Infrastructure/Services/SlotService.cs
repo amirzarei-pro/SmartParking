@@ -50,4 +50,24 @@ public sealed class SlotService : ISlotService
         return true;
     }
 
+    public async Task<bool> DeleteAsync(string slotLabel, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(slotLabel))
+            return false;
+
+        var slot = await _db.Slots
+            .Include(s => s.Sensor)
+            .FirstOrDefaultAsync(x => x.Label == slotLabel, ct);
+
+        if (slot is null)
+            return false;
+
+        // Only allow deletion if not linked to a sensor
+        if (slot.Sensor is not null)
+            return false;
+
+        _db.Slots.Remove(slot);
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
 }

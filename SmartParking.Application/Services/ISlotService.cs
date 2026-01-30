@@ -6,5 +6,5 @@ public interface ISlotService
 {
     Task<List<SlotDto>> GetAllAsync(CancellationToken ct);
     Task<bool> UpdateThresholdAsync(string slotLabel, double thresholdCm, CancellationToken ct);
-
+    Task<bool> DeleteAsync(string slotLabel, CancellationToken ct);
 }

@@ -655,7 +655,7 @@ function wireEvents() {
     }));
 
     // refresh
-    $("#btnRefresh").addEventListener("click", () => {
+    $("#btnRefresh")?.addEventListener("click", () => {
         renderKPIs();
         buildCharts();
         renderEvents();
@@ -664,14 +664,14 @@ function wireEvents() {
     });
 
     // seed button: re-seed pilot
-    $("#btnSeedData").addEventListener("click", () => {
+    $("#btnSeedData")?.addEventListener("click", () => {
         seedPilot();
         renderDashboard();
         toast("Seeded", "Pilot seed applied: NODE-001 + 2 sensors.", "ok");
     });
 
     // add slot in pilot: disabled (to keep consistency)
-    $("#btnAddSlot").addEventListener("click", () => {
+    $("#btnAddSlot")?.addEventListener("click", () => {
         openModal("Pilot Mode", `
       In pilot you have: <b>1 device</b> and <b>2 sensors</b>.
       <br/>Slots are fixed: <b>A1</b> and <b>A2</b>.
@@ -680,7 +680,7 @@ function wireEvents() {
     });
 
     // live buttons
-    $("#btnLegend").addEventListener("click", () => {
+    $("#btnLegend")?.addEventListener("click", () => {
         openModal("Legend", `
       <div style="display:flex;flex-direction:column;gap:10px;">
         <div><span class="badge badge--free">FREE</span> Available</div>
@@ -690,17 +690,17 @@ function wireEvents() {
     `, closeModal);
     });
 
-    $("#btnForceRefresh").addEventListener("click", () => {
+    $("#btnForceRefresh")?.addEventListener("click", () => {
         if (!state.selectedSlotId) return toast("No slot selected", "Select A1 or A2 first.", "warn");
         simulateTelemetry(state.selectedSlotId);
     });
 
-    $("#btnMarkOffline").addEventListener("click", () => {
+    $("#btnMarkOffline")?.addEventListener("click", () => {
         if (!state.selectedSlotId) return toast("No slot selected", "Select A1 or A2 first.", "warn");
         toggleOffline(state.selectedSlotId);
     });
 
-    $("#btnReassign").addEventListener("click", () => {
+    $("#btnReassign")?.addEventListener("click", () => {
         openModal("Pilot Mode", `
       Sensor mapping is fixed in pilot:
       <br/><b>S1 → A1</b>
@@ -710,21 +710,21 @@ function wireEvents() {
     });
 
     // logs controls
-    $("#logLevel").addEventListener("change", () => renderLogs());
-    $("#btnExport").addEventListener("click", () => exportLogs());
-    $("#btnInject").addEventListener("click", () => {
+    $("#logLevel")?.addEventListener("change", () => renderLogs());
+    $("#btnExport")?.addEventListener("click", () => exportLogs());
+    $("#btnInject")?.addEventListener("click", () => {
         pushLog({ level: "info", status: "free", message: "Injected test event (pilot)", meta: "Manual", time: nowISO() });
         toast("Injected", "Event added.", "ok");
         renderLogs();
     });
-    $("#btnClearLogs").addEventListener("click", () => {
+    $("#btnClearLogs")?.addEventListener("click", () => {
         state.logs = [];
         renderLogs();
         toast("Cleared", "Logs cleared.", "warn");
     });
 
     // settings
-    $("#btnSaveSettings").addEventListener("click", () => {
+    $("#btnSaveSettings")?.addEventListener("click", () => {
         state.settings.thresholdCm = parseInt($("#threshold").value, 10);
         state.settings.intervalSec = parseInt($("#interval").value, 10);
         state.settings.offlineTimeoutSec = parseInt($("#offlineTimeout").value, 10);
@@ -738,78 +738,78 @@ function wireEvents() {
         buildCharts();
     });
 
-    $("#btnResetSettings").addEventListener("click", () => {
+    $("#btnResetSettings")?.addEventListener("click", () => {
         state.settings = { thresholdCm: 15, intervalSec: 5, offlineTimeoutSec: 20, enableSignalR: true, enableAudit: true };
         renderSettings();
         toast("Reset", "Settings reset.", "warn");
     });
 
     // simulation
-    $("#btnSimLive").addEventListener("click", startSimulation);
-    $("#btnClearSim").addEventListener("click", stopSimulation);
-
-    // theme toggle hook (using event delegation for Blazor compatibility)
-    document.addEventListener("click", (e) => {
-        const btn = e.target.closest("#btnTheme");
-        if (btn) {
-            document.body.classList.toggle("theme-alt");
-            toast("Theme", "Theme toggled (demo).", "ok");
-        }
-    });
-
-    // sidebar (desktop collapse + mobile off-canvas) - using event delegation for Blazor compatibility
-    document.addEventListener("click", (e) => {
-        // Mobile menu button
-        if (e.target.closest("#btnMobileMenu")) {
-            if (!isNarrow()) return;
-            const sb = $("#sidebar");
-            if (!sb) return;
-
-            if (!sb.classList.contains("is-open")) openSidebarMobile();
-            else closeSidebarMobile();
-            return;
-        }
-
-        // Desktop collapse button
-        if (e.target.closest("#btnCollapse")) {
-            if (isNarrow()) return;
-            toggleSidebarCollapsed();
-            return;
-        }
-
-        // Sidebar overlay click
-        if (e.target.closest("#sidebarOverlay")) {
-            closeSidebarMobile();
-            return;
-        }
-    });
-
-    window.addEventListener("resize", () => {
-        if (isNarrow()) closeSidebarMobile();
-        applySidebarCollapsedState();
-    });
-
-
-    // ctrl+k focus search
-    document.addEventListener("keydown", (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
-            e.preventDefault();
-            $("#globalSearch").focus();
-        }
-        if (e.key === "Escape") {
-            closeModal();
-            closeSidebarMobile();
-        }
-    });
-
-    // global search: A1/A2 focus
-    $("#globalSearch").addEventListener("input", () => {
-        const q = $("#globalSearch").value.trim().toLowerCase();
-        if (!q) return;
-        const slot = state.slots.find(s => s.label.toLowerCase().includes(q));
-        if (slot) { setRoute("live"); selectSlot(slot.id, { silent: true }); }
-    });
+    $("#btnSimLive")?.addEventListener("click", startSimulation);
+    $("#btnClearSim")?.addEventListener("click", stopSimulation);
 }
+
+// Global event delegation for sidebar and theme (outside wireEvents for reliability)
+// These are registered immediately and work with Blazor dynamic rendering
+document.addEventListener("click", (e) => {
+    // Theme toggle
+    if (e.target.closest("#btnTheme")) {
+        document.body.classList.toggle("theme-alt");
+        toast("Theme", "Theme toggled (demo).", "ok");
+        return;
+    }
+
+    // Mobile menu button
+    if (e.target.closest("#btnMobileMenu")) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!isNarrow()) return;
+        const sb = document.querySelector("#sidebar");
+        if (!sb) return;
+
+        if (!sb.classList.contains("is-open")) openSidebarMobile();
+        else closeSidebarMobile();
+        return;
+    }
+
+    // Desktop collapse button
+    if (e.target.closest("#btnCollapse")) {
+        if (isNarrow()) return;
+        toggleSidebarCollapsed();
+        return;
+    }
+
+    // Sidebar overlay click
+    if (e.target.closest("#sidebarOverlay")) {
+        closeSidebarMobile();
+        return;
+    }
+});
+
+window.addEventListener("resize", () => {
+    if (isNarrow()) closeSidebarMobile();
+    applySidebarCollapsedState();
+});
+
+// ctrl+k focus search
+document.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        $("#globalSearch")?.focus();
+    }
+    if (e.key === "Escape") {
+        closeModal();
+        closeSidebarMobile();
+    }
+});
+
+// global search: A1/A2 focus
+$("#globalSearch")?.addEventListener("input", () => {
+    const q = $("#globalSearch").value.trim().toLowerCase();
+    if (!q) return;
+    const slot = state.slots.find(s => s.label.toLowerCase().includes(q));
+    if (slot) { setRoute("live"); selectSlot(slot.id, { silent: true }); }
+});
 
 function exportLogs() {
     const json = JSON.stringify(state.logs, null, 2);

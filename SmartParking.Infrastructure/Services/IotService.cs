@@ -190,8 +190,7 @@ _db.TelemetryLogs.Add(new SmartParking.Domain.Entities.TelemetryLog
                         : SlotStatus.Free;
 
                     // Check from DB if slot exists with this slot code (Label)
-                    var existingSlot = existingSensor.Slot 
-                        ?? await _db.Slots.FirstOrDefaultAsync(s => s.Label == sensorDto.Slot.Label, ct);
+                    var existingSlot = await _db.Slots.FirstOrDefaultAsync(s => s.Label == sensorDto.Slot.Label, ct);
 
                     if (existingSlot is null)
                     {
