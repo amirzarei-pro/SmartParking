@@ -147,7 +147,7 @@ dotnet run --project SmartParking.DeviceSim
 حالت‌های موردنیاز را وارد کنید؛ بوت و تله‌متری ارسال می‌شود.
 
 ## فریمور (ESP8266)
-به پوشه `IotFirmware/parking-esp8266` مراجعه کنید. کتابخانه‌ها:
+به [IotFirmware/parking-esp8266/README.fa.md](IotFirmware/parking-esp8266/README.fa.md) مراجعه کنید. کتابخانه‌ها:
 - ESP8266WiFi, ESP8266HTTPClient, ArduinoJson, Adafruit_GFX, Adafruit_SSD1306, Wire
 پین‌ها (نمونه): `S1: trig D7, echo D8`، `S2: trig D5, echo D6`، بازر `D3`
 تنظیمات: WiFi، `SERVER_BASE`، `DEVICE_CODE`، `DEVICE_KEY`، بازهٔ تله‌متری و آستانه‌ها.
@@ -163,4 +163,6 @@ dotnet run --project SmartParking.DeviceSim
 - ESP8266: از IP قابل دسترس به‌جای `localhost` برای `SERVER_BASE` استفاده کنید و WiFi را بررسی کنید
 
 ## مجوز
-مشخص نشده است.
+حق نشر (c) 2026 امیر زارعی.
+
+برای شرایط مجوز و دسترسی، فایل [LICENSE](LICENSE) را ببینید یا به https://github.com/amirzarei-pro مراجعه کنید.

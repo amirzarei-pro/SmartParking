@@ -103,4 +103,6 @@ const unsigned long WIFI_CONNECT_TIMEOUT_MS = 15000;
 - نویز فاصله: نصب سنسور را پایدار کنید، تغذیه را بررسی کنید و `occupiedThresholdCm` را تنظیم کنید
 
 ## مجوز
-مشخص نشده است.
+حق نشر (c) 2026 امیر زارعی.
+
+برای شرایط مجوز و دسترسی، فایل [LICENSE](../../LICENSE) را ببینید یا به https://github.com/amirzarei-pro مراجعه کنید.

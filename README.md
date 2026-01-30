@@ -147,7 +147,7 @@ dotnet run --project SmartParking.DeviceSim
 Interactively set desired states; simulator sends boot + telemetry.
 
 ## Firmware (ESP8266)
-See `IotFirmware/parking-esp8266` for full instructions and pin mappings. Firmware uses:
+See [IotFirmware/parking-esp8266/README.md](IotFirmware/parking-esp8266/README.md) for full instructions and pin mappings. Firmware uses:
 - Libraries: ESP8266WiFi, ESP8266HTTPClient, ArduinoJson, Adafruit_GFX, Adafruit_SSD1306, Wire
 - Pins (example): `S1: trig D7, echo D8`, `S2: trig D5, echo D6`, buzzer `D3`
 - Config: WiFi SSID/PASS, `SERVER_BASE`, `DEVICE_CODE`, `DEVICE_KEY`, telemetry interval, thresholds
@@ -163,4 +163,6 @@ See `IotFirmware/parking-esp8266` for full instructions and pin mappings. Firmwa
 - ESP8266: use reachable IP for `SERVER_BASE` (not `localhost`), and verify WiFi credentials
 
 ## License
-Not specified.
+Copyright (c) 2026 Amir Zarei.
+
+For licensing terms and permissions, see [LICENSE](LICENSE) or https://github.com/amirzarei-pro.

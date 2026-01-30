@@ -103,4 +103,6 @@ The server responds with slot update result and current status.
 - Distances noisy: stabilize sensor mount, verify power, adjust `occupiedThresholdCm`
 
 ## License
-Not specified.
+Copyright (c) 2026 Amir Zarei.
+
+For licensing terms and permissions, see [LICENSE](../../LICENSE) or https://github.com/amirzarei-pro.
