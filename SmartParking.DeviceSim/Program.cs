@@ -7,7 +7,7 @@ namespace SmartParking.DeviceSim;
 internal static class Program
 {
     // ====== CONFIG (match your ESP source) ======
-    private const string ServerBase = "http://192.168.1.2:5294";
+    private const string ServerBase = "http://127.0.0.1:5294";
     private const string DeviceCode = "NODE-002";          // simulated second device
     private const string DeviceKey  = "d0bba595641a45fc8977fdb85fda6b4d";       // set your key in DB
     private static readonly TimeSpan TelemetryInterval = TimeSpan.FromSeconds(1);

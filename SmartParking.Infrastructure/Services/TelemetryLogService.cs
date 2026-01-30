@@ -175,9 +175,11 @@ public sealed class TelemetryLogService : ITelemetryLogService
 
     private static void DistributeMinutesAcrossHours(List<double> hourlyMinutes, DateTimeOffset start, DateTimeOffset end, DateTimeOffset startOfDay)
     {
-        // Clamp to today
+        // Clamp to target day boundaries
+        var endOfDay = startOfDay.AddDays(1);
         if (start < startOfDay) start = startOfDay;
-        if (end > startOfDay.AddDays(1)) end = startOfDay.AddDays(1);
+        if (end > endOfDay) end = endOfDay;
+        if (start >= end) return; // Nothing to distribute
 
         var current = start;
         while (current < end)
@@ -189,9 +191,14 @@ public sealed class TelemetryLogService : ITelemetryLogService
             var hourEnd = startOfDay.AddHours(hour + 1);
             var periodEnd = end < hourEnd ? end : hourEnd;
 
-            // Add minutes to this hour
+            // Add minutes to this hour (clamped to valid range)
             var minutes = (periodEnd - current).TotalMinutes;
-            hourlyMinutes[hour] += minutes;
+            if (minutes > 0)
+            {
+                hourlyMinutes[hour] += minutes;
+                // Clamp to max 60 minutes per hour
+                if (hourlyMinutes[hour] > 60) hourlyMinutes[hour] = 60;
+            }
 
             current = periodEnd;
         }

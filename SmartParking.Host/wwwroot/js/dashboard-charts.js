@@ -138,8 +138,9 @@ window.smartParkingCharts = (function () {
                                     return Math.round(value) + 'm';
                                 }
                             },
+                            min: 0,
                             beginAtZero: true,
-                            max: 60, // Max 60 minutes per hour
+                            suggestedMax: 60, // Max 60 minutes per hour
                             title: {
                                 display: true,
                                 text: 'Minutes Occupied',

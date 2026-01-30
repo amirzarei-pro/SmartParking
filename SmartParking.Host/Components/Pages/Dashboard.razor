@@ -296,10 +296,11 @@ else
             };
             
             // Prepare slot hourly occupancy data for the multi-line chart
+            // Clamp values to valid range: 0-60 minutes per hour
             var slotHourlyData = _slotHourlyOccupancy.Select(s => new
             {
                 slotLabel = s.SlotLabel,
-                hourlyMinutes = s.HourlyOccupancyMinutes.Select(m => Math.Round(m, 1)).ToArray()
+                hourlyMinutes = s.HourlyOccupancyMinutes.Select(m => Math.Round(Math.Clamp(m, 0, 60), 1)).ToArray()
             }).ToArray();
             
             var result = await JS.InvokeAsync<ChartResult>("smartParkingCharts.initCharts", chartData, slotHourlyData);
