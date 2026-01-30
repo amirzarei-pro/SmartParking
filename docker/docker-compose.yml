@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  smartparking-app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: smartparking-app
+    ports:
+      - "5294:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__SmartParkingDb=Server=sqlserver;Database=SmartParking_DB;User ID=sa;Password=YourStrong!Passw0rd;MultipleActiveResultSets=true;TrustServerCertificate=True
+      - Auth__Username=admin
+      - Auth__Password=admin123
+      - Offline__TimeoutSeconds=30
+      - Offline__CheckIntervalSeconds=5
+    networks:
+      - smartparking-network
+    restart: unless-stopped
+
+networks:
+  smartparking-network:
+    driver: bridge
