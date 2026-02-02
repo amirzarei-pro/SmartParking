@@ -15,7 +15,7 @@ const char* WIFI_SSID = "creator";
 const char* WIFI_PASSWORD = "amiramir";
 
 // Server (IMPORTANT: use IP or domain reachable from ESP8266; NOT localhost)
-const char* SERVER_BASE = "http://10.114.52.107:5294";
+const char* SERVER_BASE = "https://parking.simad.info";
 
 // Device identity
 const char* DEVICE_CODE = "NODE-001";
